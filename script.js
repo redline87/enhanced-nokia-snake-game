@@ -21,9 +21,10 @@ class SnakeGame {
         
         // Bind events
         this.bindEvents();
+        this.initializeScoreboard();
         
         // Show initial overlay
-        this.showOverlay('SNAKE', 'Tap screen or ● to start\\nUse arrow keys or buttons to move');
+        this.showOverlay('SNAKE', 'Press SPACE or ● to start\\nThen use arrow keys to move');
     }
     
     reset() {
@@ -48,142 +49,196 @@ class SnakeGame {
         });
         
         // Virtual keypad controls
-        document.getElementById('up').addEventListener('click', () => this.changeDirection(0, -1));
-        document.getElementById('down').addEventListener('click', () => this.changeDirection(0, 1));
-        document.getElementById('left').addEventListener('click', () => this.changeDirection(-1, 0));
-        document.getElementById('right').addEventListener('click', () => this.changeDirection(1, 0));
-        document.getElementById('select').addEventListener('click', () => this.toggleGame());
+        document.getElementById('up').addEventListener('click', () => {
+            this.setDirection(0, -1);
+        });
+        document.getElementById('down').addEventListener('click', () => {
+            this.setDirection(0, 1);
+        });
+        document.getElementById('left').addEventListener('click', () => {
+            this.setDirection(-1, 0);
+        });
+        document.getElementById('right').addEventListener('click', () => {
+            this.setDirection(1, 0);
+        });
+        document.getElementById('select').addEventListener('click', () => {
+            this.toggleGame();
+        });
         
-        // Mobile touch controls - make screen tappable for start/pause
+        // Touch controls for mobile
         this.canvas.addEventListener('click', () => {
             if (!this.gameRunning || this.gameOver) {
                 this.toggleGame();
             }
         });
         
-        // Add touch event listeners for mobile
-        document.getElementById('up').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.changeDirection(0, -1);
-        });
-        document.getElementById('down').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.changeDirection(0, 1);
-        });
-        document.getElementById('left').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.changeDirection(-1, 0);
-        });
-        document.getElementById('right').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.changeDirection(1, 0);
-        });
-        document.getElementById('select').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.toggleGame();
+        // Scoreboard events
+        document.getElementById('showScoreboard').addEventListener('click', () => {
+            this.showScoreboard();
         });
         
-        // Prevent context menu on long press
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Start game loop
+        this.gameLoop();
+    }
+    
+    initializeScoreboard() {
+        // Name input modal events
+        const nameInputModal = document.getElementById('nameInputModal');
+        const scoreboardModal = document.getElementById('scoreboardModal');
+        const playerNameInput = document.getElementById('playerName');
+        const finalScoreSpan = document.getElementById('finalScore');
+        
+        document.getElementById('submitScore').addEventListener('click', () => {
+            const name = playerNameInput.value.trim();
+            if (name) {
+                this.submitScore(name, this.score);
+                this.hideModal(nameInputModal);
+            } else {
+                playerNameInput.focus();
+                playerNameInput.style.borderColor = '#e74c3c';
+                setTimeout(() => {
+                    playerNameInput.style.borderColor = '#34495e';
+                }, 1000);
+            }
+        });
+        
+        document.getElementById('skipScore').addEventListener('click', () => {
+            this.hideModal(nameInputModal);
+        });
+        
+        // Scoreboard modal events
+        document.getElementById('closeScoreboard').addEventListener('click', () => {
+            this.hideModal(scoreboardModal);
+        });
+        
+        document.getElementById('refreshScores').addEventListener('click', () => {
+            this.loadScoreboard();
+        });
+        
+        // Enter key support for name input
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('submitScore').click();
+            }
+        });
+        
+        // Close modals on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.hideModal(nameInputModal);
+                this.hideModal(scoreboardModal);
+            }
+        });
+        
+        // Close modals on background click
+        nameInputModal.addEventListener('click', (e) => {
+            if (e.target === nameInputModal) {
+                this.hideModal(nameInputModal);
+            }
+        });
+        
+        scoreboardModal.addEventListener('click', (e) => {
+            if (e.target === scoreboardModal) {
+                this.hideModal(scoreboardModal);
+            }
+        });
     }
     
     handleKeyPress(e) {
-        e.preventDefault();
+        if (e.code === 'Space') {
+            e.preventDefault();
+            this.toggleGame();
+            return;
+        }
         
-        switch(e.code) {
-            case 'ArrowUp':
-                this.changeDirection(0, -1);
-                this.pulseKey('up');
-                break;
-            case 'ArrowDown':
-                this.changeDirection(0, 1);
-                this.pulseKey('down');
-                break;
-            case 'ArrowLeft':
-                this.changeDirection(-1, 0);
-                this.pulseKey('left');
-                break;
-            case 'ArrowRight':
-                this.changeDirection(1, 0);
-                this.pulseKey('right');
-                break;
-            case 'Space':
-                this.toggleGame();
-                this.pulseKey('select');
-                break;
+        if (this.gameRunning && !this.gameOver) {
+            switch(e.code) {
+                case 'ArrowUp':
+                    e.preventDefault();
+                    this.setDirection(0, -1);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    this.setDirection(0, 1);
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    this.setDirection(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    this.setDirection(1, 0);
+                    break;
+            }
         }
     }
     
-    pulseKey(keyId) {
-        const key = document.getElementById(keyId);
-        key.classList.add('pulse');
-        setTimeout(() => key.classList.remove('pulse'), 500);
-    }
-    
-    changeDirection(x, y) {
-        // Allow direction changes when game is running or when no direction is set
-        if (!this.gameRunning && !(this.direction.x === 0 && this.direction.y === 0)) return;
-        
-        // Prevent reverse direction (only if snake has moved)
-        if (this.snake.length > 1 && this.direction.x === -x && this.direction.y === -y) return;
-        
+    setDirection(x, y) {
+        // Prevent snake from going into itself
+        if (this.direction.x === -x && this.direction.y === -y) {
+            return;
+        }
         this.direction = { x, y };
+        
+        // Button press animation
+        const buttons = {
+            '0,-1': 'up',
+            '0,1': 'down',
+            '-1,0': 'left',
+            '1,0': 'right'
+        };
+        const buttonId = buttons[`${x},${y}`];
+        if (buttonId) {
+            const button = document.getElementById(buttonId);
+            button.classList.add('pulse');
+            setTimeout(() => button.classList.remove('pulse'), 200);
+        }
     }
     
     toggleGame() {
         if (this.gameOver) {
-            this.restart();
+            this.reset();
+            this.hideOverlay();
+            this.gameRunning = true;
         } else if (this.gameRunning) {
-            this.pause();
+            this.gameRunning = false;
+            this.showOverlay('PAUSED', 'Press SPACE to continue');
         } else {
-            this.start();
+            this.gameRunning = true;
+            this.hideOverlay();
         }
-    }
-    
-    start() {
-        this.gameRunning = true;
-        this.hideOverlay();
-        this.gameLoop();
-    }
-    
-    pause() {
-        this.gameRunning = false;
-        this.showOverlay('PAUSED', 'Press SPACE to continue');
-    }
-    
-    restart() {
-        this.reset();
-        this.start();
-    }
-    
-    gameLoop() {
-        const currentTime = Date.now();
         
-        if (currentTime - this.lastMoveTime >= this.speed) {
-            this.update();
-            this.lastMoveTime = currentTime;
+        // Center button animation
+        const centerBtn = document.getElementById('select');
+        centerBtn.classList.add('pulse');
+        setTimeout(() => centerBtn.classList.remove('pulse'), 200);
+    }
+    
+    gameLoop(currentTime = 0) {
+        if (this.gameRunning && !this.gameOver) {
+            if (currentTime - this.lastMoveTime >= this.speed) {
+                this.move();
+                this.lastMoveTime = currentTime;
+            }
         }
         
         this.draw();
-        
-        if (this.gameRunning) {
-            requestAnimationFrame(() => this.gameLoop());
-        }
+        requestAnimationFrame((time) => this.gameLoop(time));
     }
     
-    update() {
+    move() {
         if (!this.gameRunning || this.gameOver) return;
         
-        // Don't move if no direction is set yet
+        // Don't move if no direction is set (snake hasn't started moving yet)
         if (this.direction.x === 0 && this.direction.y === 0) return;
         
-        // Move snake head
         const head = { ...this.snake[0] };
         head.x += this.direction.x;
         head.y += this.direction.y;
         
         // Check wall collision
-        if (head.x < 0 || head.x >= this.tileCount.x || head.y < 0 || head.y >= this.tileCount.y) {
+        if (head.x < 0 || head.x >= this.tileCount.x || 
+            head.y < 0 || head.y >= this.tileCount.y) {
             this.endGame();
             return;
         }
@@ -251,7 +306,6 @@ class SnakeGame {
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
         this.ctx.lineWidth = 1;
         
-        // Vertical lines
         for (let x = 0; x <= this.tileCount.x; x++) {
             this.ctx.beginPath();
             this.ctx.moveTo(x * this.gridSize, 0);
@@ -259,7 +313,6 @@ class SnakeGame {
             this.ctx.stroke();
         }
         
-        // Horizontal lines
         for (let y = 0; y <= this.tileCount.y; y++) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y * this.gridSize);
@@ -275,18 +328,18 @@ class SnakeGame {
                 x: Math.floor(Math.random() * this.tileCount.x),
                 y: Math.floor(Math.random() * this.tileCount.y)
             };
-        } while (this.snake.some(segment => segment.x === food.x && segment.y === food.y));
+        } while (this.snake.some(segment => 
+            segment.x === food.x && segment.y === food.y));
         
         return food;
     }
     
     increaseSpeed() {
-        if (this.speed > 80) {
-            this.speed -= 2;
-        }
+        // Increase speed slightly each time food is eaten
+        this.speed = Math.max(50, this.speed - 2);
     }
     
-    endGame() {
+    async endGame() {
         this.gameRunning = false;
         this.gameOver = true;
         
@@ -296,15 +349,158 @@ class SnakeGame {
             document.querySelector('.nokia-phone').classList.remove('shake');
         }, 500);
         
-        // Check for high score
-        if (this.score > this.getHighScore()) {
-            this.saveHighScore(this.score);
-            this.showOverlay('NEW HIGH SCORE!', `Score: ${this.score}\\nPress SPACE to play again`);
-        } else {
-            this.showOverlay('GAME OVER', `Score: ${this.score}\\nPress SPACE to play again`);
-        }
-        
         this.playGameOverSound();
+        
+        // Check if score qualifies for top 10
+        try {
+            const response = await fetch(`/api/scores/check/${this.score}`);
+            const result = await response.json();
+            
+            if (result.qualifies) {
+                // Show name input dialog
+                this.showNameInputDialog();
+            } else {
+                // Show regular game over
+                const localHighScore = this.getHighScore();
+                if (this.score > localHighScore) {
+                    this.saveHighScore(this.score);
+                    this.showOverlay('NEW LOCAL HIGH!', `Score: ${this.score}\\nPress SPACE to play again`);
+                } else {
+                    this.showOverlay('GAME OVER', `Score: ${this.score}\\nPress SPACE to play again`);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking score:', error);
+            // Fallback to local high score logic
+            const localHighScore = this.getHighScore();
+            if (this.score > localHighScore) {
+                this.saveHighScore(this.score);
+                this.showOverlay('NEW HIGH SCORE!', `Score: ${this.score}\\nPress SPACE to play again`);
+            } else {
+                this.showOverlay('GAME OVER', `Score: ${this.score}\\nPress SPACE to play again`);
+            }
+        }
+    }
+    
+    showNameInputDialog() {
+        const modal = document.getElementById('nameInputModal');
+        const finalScoreSpan = document.getElementById('finalScore');
+        const playerNameInput = document.getElementById('playerName');
+        
+        finalScoreSpan.textContent = this.score;
+        playerNameInput.value = '';
+        playerNameInput.style.borderColor = '#34495e';
+        
+        this.showModal(modal);
+        
+        // Focus on input after animation
+        setTimeout(() => {
+            playerNameInput.focus();
+        }, 300);
+    }
+    
+    async submitScore(name, score) {
+        try {
+            const response = await fetch('/api/scores', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, score }),
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Score submitted:', result);
+                
+                // Update local high score too
+                const localHighScore = this.getHighScore();
+                if (score > localHighScore) {
+                    this.saveHighScore(score);
+                }
+                
+                // Show success message
+                this.showOverlay('SCORE SAVED!', `${name}: ${score}\\nPress SPACE to play again`);
+            } else {
+                const error = await response.json();
+                console.error('Error submitting score:', error);
+                this.showOverlay('SAVE FAILED', `Score: ${score}\\nPress SPACE to play again`);
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            this.showOverlay('CONNECTION ERROR', `Score: ${score}\\nPress SPACE to play again`);
+        }
+    }
+    
+    async showScoreboard() {
+        const modal = document.getElementById('scoreboardModal');
+        this.showModal(modal);
+        this.loadScoreboard();
+    }
+    
+    async loadScoreboard() {
+        const content = document.getElementById('scoreboardContent');
+        content.innerHTML = '<div class=\"loading\">Loading scores...</div>';
+        
+        try {
+            const response = await fetch('/api/scores');
+            const scores = await response.json();
+            
+            if (scores.length === 0) {
+                content.innerHTML = `
+                    <div class=\"empty-scores\">
+                        <h4>No scores yet!</h4>
+                        <p>Be the first to set a high score!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const scoresList = document.createElement('ol');
+            scoresList.className = 'scoreboard-list';
+            
+            scores.forEach((score, index) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'score-item';
+                
+                const date = new Date(score.timestamp).toLocaleDateString();
+                
+                listItem.innerHTML = `
+                    <span class=\"score-rank\">#${index + 1}</span>
+                    <span class=\"score-name\">${this.escapeHtml(score.name)}</span>
+                    <span class=\"score-value\">${score.score}</span>
+                    <span class=\"score-date\">${date}</span>
+                `;
+                
+                scoresList.appendChild(listItem);
+            });
+            
+            content.innerHTML = '';
+            content.appendChild(scoresList);
+            
+        } catch (error) {
+            console.error('Error loading scoreboard:', error);
+            content.innerHTML = `
+                <div class=\"error\">
+                    Failed to load scores.<br>
+                    Please check your connection.
+                </div>
+            `;
+        }
+    }
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    showModal(modal) {
+        modal.classList.add('show');
+    }
+    
+    hideModal(modal) {
+        modal.classList.remove('show');
     }
     
     updateScore() {
@@ -313,7 +509,7 @@ class SnakeGame {
     
     showOverlay(title, message) {
         this.overlayTitle.textContent = title;
-        this.overlayMessage.innerHTML = message.replace('\\n', '<br>');
+        this.overlayMessage.innerHTML = message.replace('\\\\n', '<br>');
         this.highScoreElement.textContent = this.getHighScore();
         this.overlay.classList.remove('hidden');
     }
@@ -328,23 +524,25 @@ class SnakeGame {
     
     saveHighScore(score) {
         localStorage.setItem('snakeHighScore', score.toString());
+        this.loadHighScore();
     }
     
     loadHighScore() {
         this.highScoreElement.textContent = this.getHighScore();
     }
     
-    // Sound effects (simple beep simulation)
     playEatSound() {
-        this.playBeep(800, 100);
+        this.playSound(800, 100);
     }
     
     playGameOverSound() {
-        this.playBeep(300, 300);
-        setTimeout(() => this.playBeep(200, 300), 350);
+        // Play a sequence of descending tones
+        this.playSound(400, 200);
+        setTimeout(() => this.playSound(300, 200), 150);
+        setTimeout(() => this.playSound(200, 300), 300);
     }
     
-    playBeep(frequency, duration) {
+    playSound(frequency, duration) {
         try {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();

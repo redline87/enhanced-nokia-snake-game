@@ -43,6 +43,37 @@
             <h2 id="overlayTitle">SNAKE</h2>
             <p id="overlayMessage">Press SPACE to start</p>
             <div class="high-score">High Score: <span id="highScore">0</span></div>
+            <button id="showScoreboard" class="scoreboard-btn">🏆 View Scoreboard</button>
+        </div>
+    </div>
+
+    <!-- Name Input Dialog -->
+    <div class="modal-overlay" id="nameInputModal">
+        <div class="modal-content">
+            <h3>🎉 High Score!</h3>
+            <p>You made it to the top 10!</p>
+            <p>Score: <span id="finalScore">0</span></p>
+            <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+            <div class="modal-buttons">
+                <button id="submitScore" class="btn-primary">Submit</button>
+                <button id="skipScore" class="btn-secondary">Skip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scoreboard Modal -->
+    <div class="modal-overlay" id="scoreboardModal">
+        <div class="modal-content scoreboard">
+            <div class="scoreboard-header">
+                <h3>🏆 High Scores</h3>
+                <button id="closeScoreboard" class="close-btn">×</button>
+            </div>
+            <div id="scoreboardContent">
+                <div class="loading">Loading scores...</div>
+            </div>
+            <div class="scoreboard-footer">
+                <button id="refreshScores" class="btn-secondary">🔄 Refresh</button>
+            </div>
         </div>
     </div>
     
