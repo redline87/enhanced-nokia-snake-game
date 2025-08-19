@@ -23,7 +23,7 @@ class SnakeGame {
         this.bindEvents();
         
         // Show initial overlay
-        this.showOverlay('SNAKE', 'Press SPACE to start');
+        this.showOverlay('SNAKE', 'Press SPACE to start\\nThen use arrow keys to move');
     }
     
     reset() {
@@ -92,10 +92,11 @@ class SnakeGame {
     }
     
     changeDirection(x, y) {
-        if (!this.gameRunning) return;
+        // Allow direction changes when game is running or when no direction is set
+        if (!this.gameRunning && !(this.direction.x === 0 && this.direction.y === 0)) return;
         
-        // Prevent reverse direction
-        if (this.direction.x === -x && this.direction.y === -y) return;
+        // Prevent reverse direction (only if snake has moved)
+        if (this.snake.length > 1 && this.direction.x === -x && this.direction.y === -y) return;
         
         this.direction = { x, y };
     }
@@ -143,6 +144,9 @@ class SnakeGame {
     
     update() {
         if (!this.gameRunning || this.gameOver) return;
+        
+        // Don't move if no direction is set yet
+        if (this.direction.x === 0 && this.direction.y === 0) return;
         
         // Move snake head
         const head = { ...this.snake[0] };
