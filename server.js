@@ -156,22 +156,27 @@ app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Snake Game Server running on http://localhost:${PORT}`);
-    console.log('🐍 Game available at: http://localhost:3000');
-    console.log('📊 Scores API: http://localhost:3000/api/scores');
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-    console.log('\\nShutting down server...');
-    db.close((err) => {
-        if (err) {
-            console.error(err.message);
-        } else {
-            console.log('Database connection closed');
-        }
+// Start server (for local development)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Snake Game Server running on http://localhost:${PORT}`);
+        console.log('🐍 Game available at: http://localhost:3000');
+        console.log('📊 Scores API: http://localhost:3000/api/scores');
     });
-    process.exit(0);
-});
+
+    // Graceful shutdown
+    process.on('SIGINT', () => {
+        console.log('\\nShutting down server...');
+        db.close((err) => {
+            if (err) {
+                console.error(err.message);
+            } else {
+                console.log('Database connection closed');
+            }
+        });
+        process.exit(0);
+    });
+}
+
+// Export for Vercel
+module.exports = app;
