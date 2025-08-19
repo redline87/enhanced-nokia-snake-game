@@ -23,7 +23,7 @@ class SnakeGame {
         this.bindEvents();
         
         // Show initial overlay
-        this.showOverlay('SNAKE', 'Press SPACE to start\\nThen use arrow keys to move');
+        this.showOverlay('SNAKE', 'Tap screen or ● to start\\nUse arrow keys or buttons to move');
     }
     
     reset() {
@@ -53,6 +53,35 @@ class SnakeGame {
         document.getElementById('left').addEventListener('click', () => this.changeDirection(-1, 0));
         document.getElementById('right').addEventListener('click', () => this.changeDirection(1, 0));
         document.getElementById('select').addEventListener('click', () => this.toggleGame());
+        
+        // Mobile touch controls - make screen tappable for start/pause
+        this.canvas.addEventListener('click', () => {
+            if (!this.gameRunning || this.gameOver) {
+                this.toggleGame();
+            }
+        });
+        
+        // Add touch event listeners for mobile
+        document.getElementById('up').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.changeDirection(0, -1);
+        });
+        document.getElementById('down').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.changeDirection(0, 1);
+        });
+        document.getElementById('left').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.changeDirection(-1, 0);
+        });
+        document.getElementById('right').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.changeDirection(1, 0);
+        });
+        document.getElementById('select').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.toggleGame();
+        });
         
         // Prevent context menu on long press
         document.addEventListener('contextmenu', (e) => e.preventDefault());
