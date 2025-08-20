@@ -47,17 +47,18 @@ class MonetizationManager {
             position: fixed;
             top: 20px;
             left: 20px;
-            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            background: linear-gradient(135deg, #f6d55c, #ed8936);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 25px;
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(237, 137, 54, 0.3);
+            box-shadow: 0 4px 15px rgba(246, 213, 92, 0.3);
             transition: all 0.3s ease;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         `;
         
         premiumBtn.addEventListener('click', () => this.showPremiumModal());

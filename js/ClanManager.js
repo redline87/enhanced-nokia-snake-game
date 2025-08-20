@@ -292,7 +292,7 @@ class ClanManager {
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.9);
-            z-index: 1020;
+            z-index: 2005;
             display: none;
             align-items: center;
             justify-content: center;
@@ -324,7 +324,7 @@ class ClanManager {
                 border-radius: 50%;
                 font-size: 20px;
                 cursor: pointer;
-                z-index: 1021;
+                z-index: 2006;
             ">×</button>
             
             <div id="clanModalContent"></div>

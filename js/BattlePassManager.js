@@ -257,7 +257,7 @@ class BattlePassManager {
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.9);
-            z-index: 1010;
+            z-index: 2004;
             display: none;
             align-items: center;
             justify-content: center;
@@ -289,7 +289,7 @@ class BattlePassManager {
                 border-radius: 50%;
                 font-size: 20px;
                 cursor: pointer;
-                z-index: 1011;
+                z-index: 2005;
             ">×</button>
             
             <div id="battlePassContent"></div>

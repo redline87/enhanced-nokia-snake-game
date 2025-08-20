@@ -67,6 +67,14 @@ class SnakeGame {
         window.battlePass = this.battlePass;
         window.clanManager = this.clanManager;
         
+        // Apply UI fixes after a short delay to ensure all components are loaded
+        setTimeout(() => {
+            if (window.uiFixManager) {
+                window.uiFixManager.fixPremiumButtonOverlay();
+                window.uiFixManager.fixModalOverlaps();
+            }
+        }, 2000);
+        
         // Initialize UI
         this.uiController.updateHighScore();
         this.uiController.showGameStart();
