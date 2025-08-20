@@ -22,6 +22,9 @@ class SnakeGame {
         this.cloudSave = new CloudSaveManager(this.userProfile, this.analytics);
         this.notifications = new NotificationManager(this.userProfile, this.analytics);
         
+        // Initialize Phase 5B Battle Pass System
+        this.battlePass = new BattlePassManager(this.userProfile, this.seasonManager, this.analytics);
+        
         // Connect analytics to user profile
         this.userProfile.analytics = this.analytics;
         
@@ -34,11 +37,12 @@ class SnakeGame {
         // Set up event handlers
         this.setupGameEventHandlers();
         
-        // Store global references for other modules (Phase 5A)
+        // Store global references for other modules (Phase 5A & 5B)
         window.socialManager = this.social;
         window.userProfile = this.userProfile;
         window.seasonManager = this.seasonManager;
         window.dataManager = this.dataManager;
+        window.battlePass = this.battlePass;
         
         // Initialize UI
         this.uiController.updateHighScore();
@@ -122,6 +126,14 @@ class SnakeGame {
             isNewRecord: isNewRecord
         });
         
+        // Update Battle Pass progress (Phase 5B integration)
+        this.battlePass.onGameEnd({
+            score: score,
+            duration: duration,
+            applesEaten: this.foodEaten,
+            isNewRecord: isNewRecord
+        });
+        
         // Update all tracking systems
         this.updateAllProgress(score, duration, isNewRecord);
         
@@ -170,7 +182,7 @@ class SnakeGame {
         this.analytics.trackGameEnd(score, duration, 'collision');
         
         // Achievement progress
-        this.achievements.updateStats({
+        const achievementProgress = this.achievements.updateStats({
             score: score,
             totalGames: 1,
             gamesThisSession: 1,
@@ -179,14 +191,26 @@ class SnakeGame {
             applesEaten: this.foodEaten
         });
         
+        // Check for new achievement unlocks for Battle Pass XP
+        if (achievementProgress && achievementProgress.newUnlocks) {
+            achievementProgress.newUnlocks.forEach(achievement => {
+                this.battlePass.onAchievementUnlocked(achievement);
+            });
+        }
+        
         // Challenge progress
-        this.challenges.updateProgress({
+        const challengeProgress = this.challenges.updateProgress({
             score: score,
             duration: duration,
             completed: true,
             applesEaten: this.foodEaten,
             previousBest: this.scoreManager.getLocalHighScore()
         });
+        
+        // Check for challenge completion for Battle Pass XP
+        if (challengeProgress && challengeProgress.completed) {
+            this.battlePass.onChallengeCompleted(challengeProgress.challenge);
+        }
     }
     
     applyGameBonus(bonus) {
@@ -331,7 +355,12 @@ class SnakeGame {
             userProfile: this.userProfile.getProfile(),
             seasonInfo: this.seasonManager.getCurrentSeason(),
             cloudSaveEnabled: this.cloudSave.isCloudSaveEnabled(),
-            notificationsEnabled: this.notifications.hasNotificationPermission()
+            notificationsEnabled: this.notifications.hasNotificationPermission(),
+            
+            // Phase 5B Status
+            battlePassTier: this.battlePass.getCurrentTier(),
+            battlePassXP: this.battlePass.getCurrentXP(),
+            hasPremiumPass: this.battlePass.hasPremiumPass()
         };
     }
     
@@ -366,6 +395,22 @@ class SnakeGame {
         };
     }
     
+    // Phase 5B APIs
+    getBattlePassStatus() {
+        return {
+            currentTier: this.battlePass.getCurrentTier(),
+            currentXP: this.battlePass.getCurrentXP(),
+            hasPremiumPass: this.battlePass.hasPremiumPass(),
+            seasonId: this.seasonManager.getCurrentSeason().id,
+            progress: this.battlePass.getCurrentTierProgress(),
+            unclaimedRewards: this.battlePass.hasUnclaimedRewards()
+        };
+    }
+    
+    getBattlePassData() {
+        return this.battlePass.getBattlePassData();
+    }
+    
     // Settings management
     toggleSound() {
         return this.audioManager.toggleSound();
@@ -375,9 +420,10 @@ class SnakeGame {
         this.audioManager.setVolume(volume);
     }
     
-    // Cleanup method for Phase 5A systems
+    // Cleanup method for Phase 5A & 5B systems
     destroy() {
         // Cleanup all systems in reverse order
+        if (this.battlePass) this.battlePass.destroy();
         if (this.notifications) this.notifications.destroy();
         if (this.cloudSave) this.cloudSave.destroy();
         if (this.seasonManager) this.seasonManager.destroy();
@@ -395,11 +441,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.snakeGame = new SnakeGame();
         console.log('🐍 Live Service Snake Game initialized successfully!');
         console.log('🎯 Phase 5A Foundation Systems: Ready');
+        console.log('⚔️ Phase 5B Battle Pass System: Ready');
         
         // Debug info in development
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             console.log('Development mode: Performance stats available via snakeGame.getPerformanceStats()');
             console.log('Phase 5A APIs: getUserProfile(), getCurrentSeason(), getCloudSaveStatus()');
+            console.log('Phase 5B APIs: getBattlePassStatus(), getBattlePassData()');
         }
         
         // Setup cleanup handlers

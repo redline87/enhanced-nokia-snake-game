@@ -754,6 +754,11 @@ class UserProfileManager {
             const streakReward = this.profile.currentStreak * 10;
             this.addCurrency('coins', streakReward, 'login_streak');
             this.showNotification(`🔥 ${this.profile.currentStreak} day streak! +${streakReward} coins`, 'success');
+            
+            // Notify Battle Pass about login streak
+            if (window.battlePass) {
+                window.battlePass.onLoginStreak(this.profile.currentStreak);
+            }
         }
     }
     
