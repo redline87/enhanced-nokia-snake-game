@@ -39,24 +39,24 @@ class UIFixManager {
     }
     
     applyUIFixes() {
-        console.log('🎨 Applying comprehensive UI fixes...');
+        console.log('🎨 Applying minimal UI fixes...');
         
-        // Apply z-index fixes
+        // TEMPORARILY DISABLED - Only apply z-index fixes for now
         this.fixZIndexConflicts();
         
-        // Fix positioning issues
-        this.fixPositioningIssues();
+        // DISABLED: Fix positioning issues
+        // this.fixPositioningIssues();
         
-        // Add responsive CSS
-        this.addResponsiveStyles();
+        // DISABLED: Add responsive CSS
+        // this.addResponsiveStyles();
         
-        // Fix modal stacking
-        this.fixModalStacking();
+        // DISABLED: Fix modal stacking - THIS WAS CAUSING THE OVERLAYS
+        // this.fixModalStacking();
         
-        // Fix color consistency
-        this.standardizeColorScheme();
+        // DISABLED: Fix color consistency
+        // this.standardizeColorScheme();
         
-        console.log('✅ UI fixes applied successfully');
+        console.log('✅ Minimal UI fixes applied successfully');
     }
     
     fixZIndexConflicts() {
@@ -172,15 +172,15 @@ class UIFixManager {
         const modalStyle = document.createElement('style');
         modalStyle.id = 'modalStackingFix';
         modalStyle.textContent = `
-            /* Modal backdrop standardization */
-            .modal-overlay, [id*="Modal"] {
+            /* Modal backdrop standardization - ONLY for actual modals */
+            #profileModal, #battlePassModal, #clanModal, #premiumModal, #achievementModal, #seasonModal {
                 position: fixed !important;
                 top: 0 !important;
                 left: 0 !important;
                 width: 100% !important;
                 height: 100% !important;
                 background: rgba(0, 0, 0, 0.8) !important;
-                display: none;
+                display: none !important;
                 align-items: center;
                 justify-content: center;
                 backdrop-filter: blur(2px);
