@@ -1,26 +1,10 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "server.js"
+  "functions": {
+    "api/scores.js": {
+      "runtime": "@vercel/node@18"
     },
-    {
-      "src": "/(.*\\.(css|js|html|png|jpg|jpeg|gif|ico|svg))$",
-      "dest": "/$1"
-    },
-    {
-      "src": "/",
-      "dest": "server.js"
+    "api/scores/check/[score].js": {
+      "runtime": "@vercel/node@18"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
   }
 }
