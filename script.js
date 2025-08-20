@@ -370,6 +370,20 @@ class SnakeGame {
         // Check if score qualifies for top 10
         try {
             const response = await fetch(`/api/scores/check/${this.score}`);
+            
+            if (!response.ok) {
+                const error = await response.json();
+                console.warn('Score check failed:', error);
+                
+                // Handle rate limiting gracefully
+                if (error.code === 'RATE_LIMIT_EXCEEDED') {
+                    this.showOverlay('SLOW DOWN!', `Too many attempts\\nTry again in a moment\\nScore: ${this.score}`);
+                    return;
+                }
+                
+                throw new Error(error.message || 'Failed to check score');
+            }
+            
             const result = await response.json();
             
             if (result.qualifies) {
@@ -440,11 +454,19 @@ class SnakeGame {
             } else {
                 const error = await response.json();
                 console.error('Error submitting score:', error);
-                this.showOverlay('SAVE FAILED', `Score: ${score}\\nTap anywhere to play again`);
+                
+                // Handle specific error types
+                if (error.code === 'RATE_LIMIT_EXCEEDED') {
+                    this.showOverlay('TOO FAST!', `Slow down there, speed demon!\\nTry again in a minute\\nScore: ${score}`);
+                } else if (error.code === 'VALIDATION_ERROR') {
+                    this.showOverlay('INVALID INPUT', `${error.message}\\nScore: ${score}\\nTap anywhere to play again`);
+                } else {
+                    this.showOverlay('SAVE FAILED', `${error.message || 'Unknown error'}\\nScore: ${score}\\nTap anywhere to play again`);
+                }
             }
         } catch (error) {
             console.error('Network error:', error);
-            this.showOverlay('CONNECTION ERROR', `Score: ${score}\\nTap anywhere to play again`);
+            this.showOverlay('CONNECTION ERROR', `Check your internet connection\\nScore: ${score}\\nTap anywhere to play again`);
         }
     }
     
@@ -460,6 +482,12 @@ class SnakeGame {
         
         try {
             const response = await fetch('/api/scores');
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to load scores');
+            }
+            
             const scores = await response.json();
             
             if (scores.length === 0) {

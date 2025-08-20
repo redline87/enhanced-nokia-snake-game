@@ -1,4 +1,6 @@
 const database = require('../lib/database');
+const { scoreSubmissionLimiter } = require('../lib/rateLimit');
+const { ValidationError, RateLimitError, DatabaseError, handleApiError } = require('../lib/errors');
 
 module.exports = async function handler(req, res) {
     // Enable CORS
@@ -13,20 +15,38 @@ module.exports = async function handler(req, res) {
     
     try {
         if (req.method === 'GET') {
-            // Get top 10 high scores
-            const scores = await database.getTopScores();
-            res.json(scores);
+            // Get top 10 high scores - no rate limiting needed for reads
+            try {
+                const scores = await database.getTopScores();
+                res.json(scores);
+            } catch (error) {
+                throw new DatabaseError('Failed to fetch scores', error);
+            }
         } else if (req.method === 'POST') {
-            // Add new score
+            // Rate limiting for score submissions
+            const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+            const rateLimitResult = scoreSubmissionLimiter.isAllowed(clientIP);
+            
+            if (!rateLimitResult.allowed) {
+                throw new RateLimitError(rateLimitResult.resetTime);
+            }
+            
+            // Add rate limit headers
+            res.setHeader('X-RateLimit-Remaining', rateLimitResult.remaining);
+            
+            // Validate and sanitize input
             const { name, score } = req.body;
             
-            // Validate input
             if (!name || typeof name !== 'string' || name.trim().length === 0) {
-                return res.status(400).json({ error: 'Name is required' });
+                throw new ValidationError('Name is required', 'name');
             }
             
             if (!score || typeof score !== 'number' || score < 0) {
-                return res.status(400).json({ error: 'Valid score is required' });
+                throw new ValidationError('Valid score is required', 'score');
+            }
+            
+            if (score > 10000) {
+                throw new ValidationError('Score seems unusually high - please verify', 'score');
             }
             
             // Sanitize name (max 20 characters, alphanumeric + spaces)
@@ -35,17 +55,20 @@ module.exports = async function handler(req, res) {
                 .replace(/[^a-zA-Z0-9\s]/g, '');
             
             if (sanitizedName.length === 0) {
-                return res.status(400).json({ error: 'Name must contain valid characters' });
+                throw new ValidationError('Name must contain valid characters (letters, numbers, spaces only)', 'name');
             }
             
-            const result = await database.addScore(sanitizedName, score);
-            console.log(`New score added: ${sanitizedName} - ${score}`);
-            res.status(201).json(result);
+            try {
+                const result = await database.addScore(sanitizedName, score);
+                console.log(`New score added: ${sanitizedName} - ${score} (IP: ${clientIP})`);
+                res.status(201).json(result);
+            } catch (error) {
+                throw new DatabaseError('Failed to save score', error);
+            }
         } else {
             res.status(405).json({ error: 'Method not allowed' });
         }
     } catch (error) {
-        console.error('Database error:', error);
-        res.status(500).json({ error: 'Database operation failed' });
+        handleApiError(error, req, res);
     }
 }
