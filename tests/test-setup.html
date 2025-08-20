@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game Tests</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-section {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .test-pass {
+            color: green;
+        }
+        .test-fail {
+            color: red;
+        }
+        .test-result {
+            margin: 5px 0;
+        }
+        #test-canvas {
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐍 Snake Game - Unit Tests</h1>
+    <div id="test-results"></div>
+    
+    <!-- Test canvas for GameEngine tests -->
+    <canvas id="test-canvas" width="320" height="240"></canvas>
+    
+    <!-- Load game modules -->
+    <script src="../js/GameEngine.js"></script>
+    <script src="../js/ScoreManager.js"></script>
+    <script src="../js/AudioManager.js"></script>
+    <script src="../js/UIController.js"></script>
+    
+    <!-- Test runner -->
+    <script>
+        class TestRunner {
+            constructor() {
+                this.tests = [];
+                this.results = [];
+            }
+            
+            test(name, testFn) {
+                this.tests.push({ name, testFn });
+            }
+            
+            async runAll() {
+                const resultsDiv = document.getElementById('test-results');
+                resultsDiv.innerHTML = '<div class="test-section"><h2>Running tests...</h2></div>';
+                
+                for (const test of this.tests) {
+                    try {
+                        await test.testFn();
+                        this.results.push({ name: test.name, passed: true });
+                    } catch (error) {
+                        this.results.push({ name: test.name, passed: false, error: error.message });
+                    }
+                }
+                
+                this.displayResults();
+            }
+            
+            displayResults() {
+                const resultsDiv = document.getElementById('test-results');
+                const passed = this.results.filter(r => r.passed).length;
+                const total = this.results.length;
+                
+                let html = `
+                    <div class="test-section">
+                        <h2>Test Results: ${passed}/${total} passed</h2>
+                    </div>
+                `;
+                
+                this.results.forEach(result => {
+                    const status = result.passed ? 'test-pass' : 'test-fail';
+                    const symbol = result.passed ? '✅' : '❌';
+                    html += `
+                        <div class="test-section">
+                            <div class="test-result ${status}">
+                                ${symbol} ${result.name}
+                            </div>
+                            ${result.error ? `<div style="color: #666; font-size: 12px;">Error: ${result.error}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                resultsDiv.innerHTML = html;
+            }
+        }
+        
+        // Test utilities
+        function assert(condition, message = 'Assertion failed') {
+            if (!condition) {
+                throw new Error(message);
+            }
+        }
+        
+        function assertEqual(actual, expected, message = `Expected ${expected}, got ${actual}`) {
+            if (actual !== expected) {
+                throw new Error(message);
+            }
+        }
+        
+        // Initialize test runner
+        const runner = new TestRunner();
+        
+        // GameEngine Tests
+        runner.test('GameEngine: Initialize correctly', () => {
+            const engine = new GameEngine('test-canvas');
+            assert(engine.canvas, 'Canvas should be found');
+            assert(engine.ctx, 'Context should be initialized');
+            assert(engine.gridSize === 16, 'Grid size should be 16');
+            assert(engine.snake.length === 1, 'Snake should start with 1 segment');
+            assert(engine.score === 0, 'Score should start at 0');
+            assert(!engine.gameRunning, 'Game should not be running initially');
+        });
+        
+        runner.test('GameEngine: Direction changes', () => {
+            const engine = new GameEngine('test-canvas');
+            
+            // Should allow initial direction
+            assert(engine.setDirection(1, 0), 'Should allow setting right direction');
+            assertEqual(engine.nextDirection.x, 1, 'Next direction X should be 1');
+            
+            // Should prevent opposite direction
+            engine.direction = { x: 1, y: 0 };
+            assert(!engine.setDirection(-1, 0), 'Should not allow opposite direction');
+        });
+        
+        runner.test('GameEngine: Food generation', () => {
+            const engine = new GameEngine('test-canvas');
+            const food = engine.generateFood();
+            
+            assert(typeof food.x === 'number', 'Food X should be a number');
+            assert(typeof food.y === 'number', 'Food Y should be a number');
+            assert(food.x >= 0 && food.x < engine.tileCount.x, 'Food X should be in bounds');
+            assert(food.y >= 0 && food.y < engine.tileCount.y, 'Food Y should be in bounds');
+        });
+        
+        // ScoreManager Tests
+        runner.test('ScoreManager: Local storage operations', () => {
+            const scoreManager = new ScoreManager();
+            
+            // Save and retrieve high score
+            scoreManager.saveLocalHighScore(100);
+            assertEqual(scoreManager.getLocalHighScore(), 100, 'Should save and retrieve high score');
+            
+            // Higher score should update
+            scoreManager.saveLocalHighScore(200);
+            assertEqual(scoreManager.getLocalHighScore(), 200, 'Should update to higher score');
+        });
+        
+        runner.test('ScoreManager: HTML escaping', () => {
+            const scoreManager = new ScoreManager();
+            const escaped = scoreManager.escapeHtml('<script>alert("xss")</script>');
+            assert(!escaped.includes('<script>'), 'Should escape HTML tags');
+            assert(escaped.includes('&lt;'), 'Should contain escaped characters');
+        });
+        
+        runner.test('ScoreManager: Error message generation', () => {
+            const scoreManager = new ScoreManager();
+            const message = scoreManager.getErrorMessage('RATE_LIMIT_EXCEEDED', 150);
+            assert(message.includes('TOO FAST'), 'Should generate appropriate error message');
+            assert(message.includes('150'), 'Should include score in message');
+        });
+        
+        // AudioManager Tests
+        runner.test('AudioManager: Initialization', () => {
+            const audioManager = new AudioManager();
+            assert(audioManager.enabled, 'Audio should be enabled by default');
+            assert(audioManager.volume === 0.1, 'Default volume should be 0.1');
+        });
+        
+        runner.test('AudioManager: Settings control', () => {
+            const audioManager = new AudioManager();
+            
+            // Toggle sound
+            const wasEnabled = audioManager.isSoundEnabled();
+            audioManager.toggleSound();
+            assert(audioManager.isSoundEnabled() !== wasEnabled, 'Should toggle sound state');
+            
+            // Volume control
+            audioManager.setVolume(0.5);
+            assertEqual(audioManager.volume, 0.5, 'Should set volume');
+            
+            // Volume bounds
+            audioManager.setVolume(1.5);
+            assertEqual(audioManager.volume, 1, 'Should clamp volume to max 1');
+            
+            audioManager.setVolume(-0.5);
+            assertEqual(audioManager.volume, 0, 'Should clamp volume to min 0');
+        });
+        
+        // Integration Tests
+        runner.test('Integration: Game state consistency', () => {
+            const engine = new GameEngine('test-canvas');
+            const scoreManager = new ScoreManager();
+            
+            // Simulate eating food
+            engine.score = 50;
+            scoreManager.saveLocalHighScore(30);
+            
+            assert(engine.getScore() === 50, 'Engine score should be consistent');
+            assert(scoreManager.getLocalHighScore() < engine.getScore(), 'New score should be higher than stored high score');
+        });
+        
+        // Run all tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => runner.runAll(), 100); // Small delay to ensure everything is loaded
+        });
+    </script>
+</body>
+</html>
