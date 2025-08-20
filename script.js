@@ -66,6 +66,14 @@ class SnakeGame {
         
         // Touch controls for mobile - make entire screen tappable
         const startGameTouch = (e) => {
+            // Don't trigger if user clicked on a button or interactive element
+            if (e.target.tagName === 'BUTTON' || 
+                e.target.closest('button') || 
+                e.target.classList.contains('scoreboard-btn') ||
+                e.target.id === 'showScoreboard') {
+                return;
+            }
+            
             if (!this.gameRunning || this.gameOver) {
                 e.preventDefault();
                 this.toggleGame();
