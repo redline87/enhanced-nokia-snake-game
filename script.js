@@ -25,6 +25,9 @@ class SnakeGame {
         // Initialize Phase 5B Battle Pass System
         this.battlePass = new BattlePassManager(this.userProfile, this.seasonManager, this.analytics);
         
+        // Initialize Phase 5C Clan Wars & Social System
+        this.clanManager = new ClanManager(this.userProfile, this.analytics);
+        
         // Connect analytics to user profile
         this.userProfile.analytics = this.analytics;
         
@@ -37,12 +40,13 @@ class SnakeGame {
         // Set up event handlers
         this.setupGameEventHandlers();
         
-        // Store global references for other modules (Phase 5A & 5B)
+        // Store global references for other modules (Phase 5A, 5B & 5C)
         window.socialManager = this.social;
         window.userProfile = this.userProfile;
         window.seasonManager = this.seasonManager;
         window.dataManager = this.dataManager;
         window.battlePass = this.battlePass;
+        window.clanManager = this.clanManager;
         
         // Initialize UI
         this.uiController.updateHighScore();
@@ -128,6 +132,14 @@ class SnakeGame {
         
         // Update Battle Pass progress (Phase 5B integration)
         this.battlePass.onGameEnd({
+            score: score,
+            duration: duration,
+            applesEaten: this.foodEaten,
+            isNewRecord: isNewRecord
+        });
+        
+        // Update Clan Wars progress (Phase 5C integration)
+        this.clanManager.onGameEnd({
             score: score,
             duration: duration,
             applesEaten: this.foodEaten,
@@ -360,7 +372,14 @@ class SnakeGame {
             // Phase 5B Status
             battlePassTier: this.battlePass.getCurrentTier(),
             battlePassXP: this.battlePass.getCurrentXP(),
-            hasPremiumPass: this.battlePass.hasPremiumPass()
+            hasPremiumPass: this.battlePass.hasPremiumPass(),
+            
+            // Phase 5C Status
+            clanId: this.clanManager.getClanId(),
+            clanRole: this.clanManager.getClanRole(),
+            clanRank: this.clanManager.getClanRank(),
+            clanPoints: this.clanManager.getClanPoints(),
+            currentWar: this.clanManager.getCurrentWar()?.name || 'None'
         };
     }
     
@@ -411,6 +430,23 @@ class SnakeGame {
         return this.battlePass.getBattlePassData();
     }
     
+    // Phase 5C APIs
+    getClanStatus() {
+        return {
+            clanId: this.clanManager.getClanId(),
+            clanName: this.clanManager.getClanName(),
+            clanRole: this.clanManager.getClanRole(),
+            clanRank: this.clanManager.getClanRank(),
+            clanPoints: this.clanManager.getClanPoints(),
+            currentWar: this.clanManager.getCurrentWar(),
+            warProgress: this.clanManager.getWarProgress()
+        };
+    }
+    
+    getClanData() {
+        return this.clanManager.getClanData();
+    }
+    
     // Settings management
     toggleSound() {
         return this.audioManager.toggleSound();
@@ -420,9 +456,10 @@ class SnakeGame {
         this.audioManager.setVolume(volume);
     }
     
-    // Cleanup method for Phase 5A & 5B systems
+    // Cleanup method for Phase 5A, 5B & 5C systems
     destroy() {
         // Cleanup all systems in reverse order
+        if (this.clanManager) this.clanManager.destroy();
         if (this.battlePass) this.battlePass.destroy();
         if (this.notifications) this.notifications.destroy();
         if (this.cloudSave) this.cloudSave.destroy();
@@ -442,12 +479,14 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('🐍 Live Service Snake Game initialized successfully!');
         console.log('🎯 Phase 5A Foundation Systems: Ready');
         console.log('⚔️ Phase 5B Battle Pass System: Ready');
+        console.log('🏰 Phase 5C Clan Wars & Social System: Ready');
         
         // Debug info in development
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             console.log('Development mode: Performance stats available via snakeGame.getPerformanceStats()');
             console.log('Phase 5A APIs: getUserProfile(), getCurrentSeason(), getCloudSaveStatus()');
             console.log('Phase 5B APIs: getBattlePassStatus(), getBattlePassData()');
+            console.log('Phase 5C APIs: getClanStatus(), getClanData()');
         }
         
         // Setup cleanup handlers
