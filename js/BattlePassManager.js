@@ -1667,8 +1667,45 @@ class BattlePassManager {
         return { ...this.battlePassData };
     }
     
+    // Setup progression tracking system
+    setupProgressionTracking() {
+        try {
+            // Initialize progression tracking system
+            console.log('📊 Setting up Battle Pass progression tracking...');
+            
+            // Set up auto-save intervals
+            this.autoSaveInterval = setInterval(() => {
+                this.saveBattlePassData();
+            }, 30000); // Save every 30 seconds
+            
+            // Set up mission reset checks  
+            this.missionResetInterval = setInterval(() => {
+                this.checkMissionResets();
+            }, 60000); // Check every minute
+            
+            // Set up XP boost expiration checks
+            this.boostCheckInterval = setInterval(() => {
+                this.getActiveXPBoost(); // This cleans up expired boosts
+            }, 300000); // Check every 5 minutes
+            
+            // Initialize mission progress tracking
+            this.updateMissionTracker();
+            
+            console.log('✅ Battle Pass progression tracking initialized');
+            
+        } catch (error) {
+            console.error('❌ Failed to setup progression tracking:', error);
+            // Continue without progression tracking to avoid breaking the game
+        }
+    }
+    
     // Cleanup
     destroy() {
+        // Clear all intervals
+        if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
+        if (this.missionResetInterval) clearInterval(this.missionResetInterval);
+        if (this.boostCheckInterval) clearInterval(this.boostCheckInterval);
+        
         this.saveBattlePassData();
         console.log('⚔️ Battle Pass Manager destroyed');
     }

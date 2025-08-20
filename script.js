@@ -1,35 +1,54 @@
 // Enhanced Snake Game - Live Service Platform (Phase 5A)
 class SnakeGame {
     constructor() {
-        // Initialize Phase 5A Foundation Systems first
-        this.dataManager = new DataManager();
-        this.userProfile = new UserProfileManager(null); // Will pass analytics after it's created
+        console.log('🎮 Initializing Snake Game Live Service Platform...');
         
-        // Initialize core modules
-        this.engine = new GameEngine('gameCanvas');
-        this.scoreManager = new ScoreManager();
-        this.audioManager = new AudioManager();
-        
-        // Initialize Phase 3 & 4 modules with user profile
-        this.analytics = new AnalyticsManager();
-        this.achievements = new AchievementManager(this.analytics);
-        this.challenges = new ChallengeManager(this.analytics, this.achievements);
-        this.social = new SocialManager(this.analytics, this.achievements);
-        this.monetization = new MonetizationManager(this.analytics);
-        
-        // Initialize Phase 5A Live Service modules
-        this.seasonManager = new SeasonManager(this.userProfile, this.analytics);
-        this.cloudSave = new CloudSaveManager(this.userProfile, this.analytics);
-        this.notifications = new NotificationManager(this.userProfile, this.analytics);
-        
-        // Initialize Phase 5B Battle Pass System
-        this.battlePass = new BattlePassManager(this.userProfile, this.seasonManager, this.analytics);
-        
-        // Initialize Phase 5C Clan Wars & Social System
-        this.clanManager = new ClanManager(this.userProfile, this.analytics);
-        
-        // Connect analytics to user profile
-        this.userProfile.analytics = this.analytics;
+        try {
+            // Initialize Phase 5A Foundation Systems first
+            console.log('🔧 Phase 5A: Foundation Systems...');
+            this.dataManager = this.safeInitialize(() => new DataManager(), 'DataManager');
+            this.userProfile = this.safeInitialize(() => new UserProfileManager(null), 'UserProfileManager');
+            
+            // Initialize core modules
+            console.log('🔧 Core Systems...');
+            this.engine = this.safeInitialize(() => new GameEngine('gameCanvas'), 'GameEngine');
+            this.scoreManager = this.safeInitialize(() => new ScoreManager(), 'ScoreManager');
+            this.audioManager = this.safeInitialize(() => new AudioManager(), 'AudioManager');
+            
+            // Initialize Phase 3 & 4 modules with user profile
+            console.log('🔧 Phase 3 & 4: Analytics & Monetization...');
+            this.analytics = this.safeInitialize(() => new AnalyticsManager(), 'AnalyticsManager');
+            this.achievements = this.safeInitialize(() => new AchievementManager(this.analytics), 'AchievementManager');
+            this.challenges = this.safeInitialize(() => new ChallengeManager(this.analytics, this.achievements), 'ChallengeManager');
+            this.social = this.safeInitialize(() => new SocialManager(this.analytics, this.achievements), 'SocialManager');
+            this.monetization = this.safeInitialize(() => new MonetizationManager(this.analytics), 'MonetizationManager');
+            
+            // Initialize Phase 5A Live Service modules
+            console.log('🔧 Phase 5A: Live Service Systems...');
+            this.seasonManager = this.safeInitialize(() => new SeasonManager(this.userProfile, this.analytics), 'SeasonManager');
+            this.cloudSave = this.safeInitialize(() => new CloudSaveManager(this.userProfile, this.analytics), 'CloudSaveManager');
+            this.notifications = this.safeInitialize(() => new NotificationManager(this.userProfile, this.analytics), 'NotificationManager');
+            
+            // Initialize Phase 5B Battle Pass System
+            console.log('🔧 Phase 5B: Battle Pass System...');
+            this.battlePass = this.safeInitialize(() => new BattlePassManager(this.userProfile, this.seasonManager, this.analytics), 'BattlePassManager');
+            
+            // Initialize Phase 5C Clan Wars & Social System
+            console.log('🔧 Phase 5C: Clan Wars System...');
+            this.clanManager = this.safeInitialize(() => new ClanManager(this.userProfile, this.analytics), 'ClanManager');
+            
+            // Connect analytics to user profile
+            if (this.userProfile && this.analytics) {
+                this.userProfile.analytics = this.analytics;
+            }
+            
+            console.log('✅ All systems initialized successfully');
+            
+        } catch (error) {
+            console.error('❌ Critical error during initialization:', error);
+            this.handleInitializationFailure(error);
+            return;
+        }
         
         // Initialize UI controller with all dependencies
         this.uiController = new UIController(this.engine, this.scoreManager, this.audioManager);
@@ -327,6 +346,151 @@ class SnakeGame {
     
     get score() {
         return this.engine.getScore();
+    }
+    
+    // Error handling and reliability methods (Google-style)
+    safeInitialize(initFunction, componentName) {
+        try {
+            const component = initFunction();
+            console.log(`✅ ${componentName} initialized successfully`);
+            return component;
+        } catch (error) {
+            console.error(`❌ Failed to initialize ${componentName}:`, error);
+            this.logInitializationError(componentName, error);
+            return this.createFallbackComponent(componentName);
+        }
+    }
+    
+    createFallbackComponent(componentName) {
+        // Create minimal fallback to prevent crashes
+        const fallback = {
+            isStub: true,
+            componentName: componentName,
+            // Add basic methods that might be called
+            destroy: () => console.log(`Fallback ${componentName} destroyed`),
+            // Catch-all method for any calls
+            __proto__: new Proxy({}, {
+                get(target, prop) {
+                    return () => {
+                        console.warn(`Called ${prop} on fallback ${componentName}`);
+                        return null;
+                    };
+                }
+            })
+        };
+        
+        console.log(`🔧 Created fallback for ${componentName}`);
+        return fallback;
+    }
+    
+    logInitializationError(componentName, error) {
+        // Log detailed error information for debugging
+        const errorInfo = {
+            component: componentName,
+            error: error.message,
+            stack: error.stack,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            url: window.location.href
+        };
+        
+        // Store error in localStorage for debugging
+        try {
+            const errors = JSON.parse(localStorage.getItem('gameInitErrors') || '[]');
+            errors.push(errorInfo);
+            localStorage.setItem('gameInitErrors', JSON.stringify(errors.slice(-10))); // Keep last 10 errors
+        } catch (e) {
+            console.error('Failed to log error to localStorage:', e);
+        }
+        
+        // Track error in analytics if available
+        if (window.gtag) {
+            gtag('event', 'initialization_error', {
+                component: componentName,
+                error_message: error.message
+            });
+        }
+    }
+    
+    handleInitializationFailure(error) {
+        console.error('🚨 Game initialization failed completely:', error);
+        
+        // Show user-friendly error message
+        this.showInitializationError(error);
+        
+        // Try to initialize minimal game mode
+        this.initializeMinimalMode();
+    }
+    
+    showInitializationError(error) {
+        const errorDiv = document.createElement('div');
+        errorDiv.innerHTML = `
+            <div style="
+                position: fixed; 
+                top: 50%; 
+                left: 50%; 
+                transform: translate(-50%, -50%);
+                background: #ff4444; 
+                color: white; 
+                padding: 30px; 
+                border-radius: 15px; 
+                text-align: center;
+                z-index: 9999;
+                font-family: monospace;
+                max-width: 400px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            ">
+                <h3 style="margin: 0 0 15px 0;">⚠️ Initialization Error</h3>
+                <p style="margin: 10px 0;">Some game features failed to load, but the core game should still work.</p>
+                <button onclick="location.reload()" style="
+                    background: white;
+                    color: #ff4444;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    margin: 10px 5px;
+                ">🔄 Refresh Page</button>
+                <button onclick="this.parentElement.parentElement.remove()" style="
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                    border: 1px solid white;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin: 10px 5px;
+                ">Continue Anyway</button>
+                <details style="margin-top: 15px; text-align: left;">
+                    <summary style="cursor: pointer;">Technical Details</summary>
+                    <pre style="font-size: 11px; margin: 10px 0; overflow: auto; max-height: 100px;">${error.stack || error.message}</pre>
+                </details>
+            </div>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+    
+    initializeMinimalMode() {
+        try {
+            // Initialize only core systems needed for basic gameplay
+            if (!this.engine) {
+                this.engine = new GameEngine('gameCanvas');
+            }
+            if (!this.scoreManager) {
+                this.scoreManager = new ScoreManager();
+            }
+            if (!this.audioManager) {
+                this.audioManager = new AudioManager();
+            }
+            if (!this.uiController) {
+                this.uiController = new UIController(this.engine, this.scoreManager, this.audioManager);
+                this.uiController.setGame(this);
+            }
+            
+            console.log('🎮 Minimal game mode initialized');
+        } catch (error) {
+            console.error('❌ Even minimal mode failed:', error);
+        }
     }
     
     // Mobile optimization
