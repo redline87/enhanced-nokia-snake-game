@@ -1,17 +1,29 @@
-// Enhanced Snake Game - Complete Production Application
+// Enhanced Snake Game - Live Service Platform (Phase 5A)
 class SnakeGame {
     constructor() {
+        // Initialize Phase 5A Foundation Systems first
+        this.dataManager = new DataManager();
+        this.userProfile = new UserProfileManager(null); // Will pass analytics after it's created
+        
         // Initialize core modules
         this.engine = new GameEngine('gameCanvas');
         this.scoreManager = new ScoreManager();
         this.audioManager = new AudioManager();
         
-        // Initialize Phase 3 & 4 modules
+        // Initialize Phase 3 & 4 modules with user profile
         this.analytics = new AnalyticsManager();
         this.achievements = new AchievementManager(this.analytics);
         this.challenges = new ChallengeManager(this.analytics, this.achievements);
         this.social = new SocialManager(this.analytics, this.achievements);
         this.monetization = new MonetizationManager(this.analytics);
+        
+        // Initialize Phase 5A Live Service modules
+        this.seasonManager = new SeasonManager(this.userProfile, this.analytics);
+        this.cloudSave = new CloudSaveManager(this.userProfile, this.analytics);
+        this.notifications = new NotificationManager(this.userProfile, this.analytics);
+        
+        // Connect analytics to user profile
+        this.userProfile.analytics = this.analytics;
         
         // Initialize UI controller with all dependencies
         this.uiController = new UIController(this.engine, this.scoreManager, this.audioManager);
@@ -22,8 +34,11 @@ class SnakeGame {
         // Set up event handlers
         this.setupGameEventHandlers();
         
-        // Store global references for other modules
+        // Store global references for other modules (Phase 5A)
         window.socialManager = this.social;
+        window.userProfile = this.userProfile;
+        window.seasonManager = this.seasonManager;
+        window.dataManager = this.dataManager;
         
         // Initialize UI
         this.uiController.updateHighScore();
@@ -99,6 +114,14 @@ class SnakeGame {
         const duration = this.currentGameDuration();
         const isNewRecord = score > this.scoreManager.getLocalHighScore();
         
+        // Update user profile first (Phase 5A integration)
+        this.userProfile.onGameEnd({
+            score: score,
+            duration: duration,
+            applesEaten: this.foodEaten,
+            isNewRecord: isNewRecord
+        });
+        
         // Update all tracking systems
         this.updateAllProgress(score, duration, isNewRecord);
         
@@ -118,6 +141,14 @@ class SnakeGame {
                 this.social.shareScore(score, isNewRecord);
             }, 2000);
         }
+        
+        // Trigger cloud save for important progress
+        if (this.cloudSave.isCloudSaveEnabled()) {
+            this.cloudSave.forceSyncNow();
+        }
+        
+        // Schedule re-engagement notifications
+        this.notifications.rescheduleEngagementNotifications();
     }
     
     handleGameRestart() {
@@ -294,7 +325,13 @@ class SnakeGame {
             
             // Monetization status
             isPremium: this.monetization.isAdFree(),
-            premiumCurrency: this.monetization.getPremiumCurrency()
+            premiumCurrency: this.monetization.getPremiumCurrency(),
+            
+            // Phase 5A Status
+            userProfile: this.userProfile.getProfile(),
+            seasonInfo: this.seasonManager.getCurrentSeason(),
+            cloudSaveEnabled: this.cloudSave.isCloudSaveEnabled(),
+            notificationsEnabled: this.notifications.hasNotificationPermission()
         };
     }
     
@@ -312,6 +349,23 @@ class SnakeGame {
         };
     }
     
+    // Phase 5A APIs
+    getUserProfile() {
+        return this.userProfile.getProfile();
+    }
+    
+    getCurrentSeason() {
+        return this.seasonManager.getCurrentSeason();
+    }
+    
+    getCloudSaveStatus() {
+        return {
+            enabled: this.cloudSave.isCloudSaveEnabled(),
+            lastSync: this.cloudSave.getLastSyncTimestamp(),
+            online: this.cloudSave.isOnlineMode()
+        };
+    }
+    
     // Settings management
     toggleSound() {
         return this.audioManager.toggleSound();
@@ -320,6 +374,18 @@ class SnakeGame {
     setSoundVolume(volume) {
         this.audioManager.setVolume(volume);
     }
+    
+    // Cleanup method for Phase 5A systems
+    destroy() {
+        // Cleanup all systems in reverse order
+        if (this.notifications) this.notifications.destroy();
+        if (this.cloudSave) this.cloudSave.destroy();
+        if (this.seasonManager) this.seasonManager.destroy();
+        if (this.userProfile) this.userProfile.destroy();
+        if (this.dataManager) this.dataManager.destroy();
+        
+        console.log('🧹 Game systems cleaned up');
+    }
 }
 
 // Initialize game when DOM is loaded
@@ -327,12 +393,34 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         // Create global game instance
         window.snakeGame = new SnakeGame();
-        console.log('🐍 Snake Game initialized successfully!');
+        console.log('🐍 Live Service Snake Game initialized successfully!');
+        console.log('🎯 Phase 5A Foundation Systems: Ready');
         
         // Debug info in development
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             console.log('Development mode: Performance stats available via snakeGame.getPerformanceStats()');
+            console.log('Phase 5A APIs: getUserProfile(), getCurrentSeason(), getCloudSaveStatus()');
         }
+        
+        // Setup cleanup handlers
+        window.addEventListener('beforeunload', () => {
+            if (window.snakeGame) {
+                window.snakeGame.destroy();
+            }
+        });
+        
+        // Handle page visibility for background sync
+        document.addEventListener('visibilitychange', () => {
+            if (window.snakeGame && window.snakeGame.cloudSave) {
+                if (document.hidden) {
+                    // Page is hidden - trigger save
+                    window.snakeGame.cloudSave.forceSyncNow();
+                } else {
+                    // Page is visible - check for updates
+                    window.snakeGame.cloudSave.attemptCloudSync();
+                }
+            }
+        });
     } catch (error) {
         console.error('Failed to initialize Snake Game:', error);
         
