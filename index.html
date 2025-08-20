@@ -77,6 +77,15 @@
         </div>
     </div>
     
+    <!-- Core Architecture - Load First -->
+    <script src="js/interfaces/GameInterfaces.js"></script>
+    <script src="js/core/DependencyContainer.js"></script>
+    <script src="js/core/EventBus.js"></script>
+    <script src="js/core/FeatureFlagService.js"></script>
+    
+    <!-- Security Layer -->
+    <script src="js/SecureClient.js"></script>
+    
     <!-- Game modules -->
     <script src="js/GameEngine.js"></script>
     <script src="js/ScoreManager.js"></script>
@@ -109,7 +118,10 @@
     <!-- UI Fix Manager - Must load after other components -->
     <script src="js/UIFixManager.js"></script>
     
-    <!-- Main game script -->
+    <!-- Game Initializer - Uses new architecture -->
+    <script src="js/GameInitializer.js"></script>
+    
+    <!-- Legacy main game script - Kept for fallback -->
     <script src="script.js"></script>
 </body>
 </html>
