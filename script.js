@@ -1,10 +1,19 @@
-// Refactored Snake Game - Main Application Class
+// Enhanced Snake Game - Complete Production Application
 class SnakeGame {
     constructor() {
         // Initialize core modules
         this.engine = new GameEngine('gameCanvas');
         this.scoreManager = new ScoreManager();
         this.audioManager = new AudioManager();
+        
+        // Initialize Phase 3 & 4 modules
+        this.analytics = new AnalyticsManager();
+        this.achievements = new AchievementManager(this.analytics);
+        this.challenges = new ChallengeManager(this.analytics, this.achievements);
+        this.social = new SocialManager(this.analytics, this.achievements);
+        this.monetization = new MonetizationManager(this.analytics);
+        
+        // Initialize UI controller with all dependencies
         this.uiController = new UIController(this.engine, this.scoreManager, this.audioManager);
         
         // Set circular reference for UI to access main game methods
@@ -12,6 +21,9 @@ class SnakeGame {
         
         // Set up event handlers
         this.setupGameEventHandlers();
+        
+        // Store global references for other modules
+        window.socialManager = this.social;
         
         // Initialize UI
         this.uiController.updateHighScore();
@@ -25,34 +37,171 @@ class SnakeGame {
     }
     
     setupGameEventHandlers() {
-        // Connect game engine events to UI and audio
+        // Connect game engine events to all systems
         this.engine.onFoodEaten = () => {
             this.audioManager.playEatSound();
             this.uiController.updateScore(this.engine.getScore());
+            
+            // Track food eaten for achievements
+            this.foodEaten = (this.foodEaten || 0) + 1;
         };
         
         this.engine.onGameOver = () => {
-            this.uiController.handleGameOver(this.engine.getScore());
+            this.handleGameEnd();
         };
         
         this.engine.onGameStart = () => {
-            this.audioManager.playStartSound();
-            this.uiController.hideOverlay();
+            this.handleGameStart();
         };
         
         this.engine.onGamePause = () => {
             this.uiController.showGamePaused();
+            this.analytics.trackEvent('game_pause', {
+                score: this.engine.getScore(),
+                duration: this.currentGameDuration()
+            });
         };
         
         this.engine.onGameResume = () => {
             this.uiController.hideOverlay();
+            this.analytics.trackEvent('game_resume', {
+                score: this.engine.getScore()
+            });
         };
         
         this.engine.onGameRestart = () => {
-            this.audioManager.playStartSound();
-            this.uiController.updateScore(0);
-            this.uiController.hideOverlay();
+            this.handleGameRestart();
         };
+    }
+    
+    handleGameStart() {
+        this.gameStartTime = Date.now();
+        this.foodEaten = 0;
+        
+        // Apply any active monetization bonuses
+        const bonus = this.monetization.applyActiveBonus();
+        if (bonus) {
+            this.applyGameBonus(bonus);
+        }
+        
+        // Audio and UI
+        this.audioManager.playStartSound();
+        this.uiController.hideOverlay();
+        this.uiController.showShareButton(false); // Hide share button during gameplay
+        
+        // Analytics and tracking
+        this.analytics.trackGameStart();
+        this.monetization.onGameStart();
+    }
+    
+    handleGameEnd() {
+        const score = this.engine.getScore();
+        const duration = this.currentGameDuration();
+        const isNewRecord = score > this.scoreManager.getLocalHighScore();
+        
+        // Update all tracking systems
+        this.updateAllProgress(score, duration, isNewRecord);
+        
+        // Handle UI and social features
+        this.uiController.handleGameOver(score);
+        this.uiController.showShareButton(true);
+        
+        // Custom events for monetization system
+        const gameEndEvent = new CustomEvent('gameEnd', {
+            detail: { score, duration, isNewRecord, completed: true }
+        });
+        document.dispatchEvent(gameEndEvent);
+        
+        // Show social sharing for high scores
+        if (isNewRecord && score > 50) {
+            setTimeout(() => {
+                this.social.shareScore(score, isNewRecord);
+            }, 2000);
+        }
+    }
+    
+    handleGameRestart() {
+        this.audioManager.playStartSound();
+        this.uiController.updateScore(0);
+        this.uiController.hideOverlay();
+        this.uiController.showShareButton(false);
+        
+        // Track restart
+        this.analytics.trackEvent('game_restart', {
+            previousScore: this.lastScore || 0
+        });
+    }
+    
+    updateAllProgress(score, duration, isNewRecord) {
+        this.lastScore = score;
+        
+        // Analytics tracking
+        this.analytics.trackGameEnd(score, duration, 'collision');
+        
+        // Achievement progress
+        this.achievements.updateStats({
+            score: score,
+            totalGames: 1,
+            gamesThisSession: 1,
+            gameDuration: duration,
+            bestScore: isNewRecord ? score : undefined,
+            applesEaten: this.foodEaten
+        });
+        
+        // Challenge progress
+        this.challenges.updateProgress({
+            score: score,
+            duration: duration,
+            completed: true,
+            applesEaten: this.foodEaten,
+            previousBest: this.scoreManager.getLocalHighScore()
+        });
+    }
+    
+    applyGameBonus(bonus) {
+        switch (bonus.type) {
+            case 'bonus_points':
+                // Add bonus points at game start
+                this.engine.score += bonus.value;
+                this.uiController.updateScore(this.engine.getScore());
+                this.showBonusNotification(`🌟 +${bonus.value} Bonus Points!`);
+                break;
+                
+            case 'multiplier':
+                this.activeMultiplier = bonus.value;
+                this.showBonusNotification(`⚡ ${bonus.value}x Score Multiplier Active!`);
+                break;
+        }
+    }
+    
+    showBonusNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #f6d55c, #ed8936);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(246, 213, 92, 0.3);
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 3000);
+    }
+    
+    currentGameDuration() {
+        return this.gameStartTime ? Date.now() - this.gameStartTime : 0;
     }
     
     // Game control methods (called by UIController)
@@ -131,7 +280,35 @@ class SnakeGame {
             fps: this.engine.getFPS(),
             snakeLength: this.engine.getSnakeLength(),
             gameSpeed: this.engine.getSpeed(),
-            score: this.engine.getScore()
+            score: this.engine.getScore(),
+            
+            // Analytics data
+            sessionStats: this.analytics.getInsights().sessionStats,
+            userProfile: this.analytics.getInsights().userProfile,
+            
+            // Achievement progress
+            achievementProgress: this.achievements.getProgress(),
+            
+            // Challenge status
+            currentChallenge: this.challenges.getCurrentChallengeInfo(),
+            
+            // Monetization status
+            isPremium: this.monetization.isAdFree(),
+            premiumCurrency: this.monetization.getPremiumCurrency()
+        };
+    }
+    
+    // Analytics API for external access
+    getAnalyticsData() {
+        return this.analytics.getInsights();
+    }
+    
+    // Achievement API
+    getAchievements() {
+        return {
+            unlocked: this.achievements.getUnlockedAchievements(),
+            progress: this.achievements.getProgress(),
+            stats: this.achievements.getCurrentStats()
         };
     }
     
