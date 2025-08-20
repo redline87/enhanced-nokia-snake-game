@@ -48,22 +48,21 @@ class SnakeGame {
             this.handleKeyPress(e);
         });
         
-        // Virtual keypad controls
-        document.getElementById('up').addEventListener('click', () => {
-            this.setDirection(0, -1);
-        });
-        document.getElementById('down').addEventListener('click', () => {
-            this.setDirection(0, 1);
-        });
-        document.getElementById('left').addEventListener('click', () => {
-            this.setDirection(-1, 0);
-        });
-        document.getElementById('right').addEventListener('click', () => {
-            this.setDirection(1, 0);
-        });
-        document.getElementById('select').addEventListener('click', () => {
-            this.toggleGame();
-        });
+        // Virtual keypad controls (both click and touch)
+        const addButtonHandlers = (id, handler) => {
+            const button = document.getElementById(id);
+            button.addEventListener('click', handler);
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handler();
+            });
+        };
+        
+        addButtonHandlers('up', () => this.setDirection(0, -1));
+        addButtonHandlers('down', () => this.setDirection(0, 1));
+        addButtonHandlers('left', () => this.setDirection(-1, 0));
+        addButtonHandlers('right', () => this.setDirection(1, 0));
+        addButtonHandlers('select', () => this.toggleGame());
         
         // Touch controls for mobile
         this.canvas.addEventListener('click', () => {
