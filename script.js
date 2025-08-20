@@ -509,7 +509,7 @@ class SnakeGame {
     
     showOverlay(title, message) {
         this.overlayTitle.textContent = title;
-        this.overlayMessage.innerHTML = message.replace('\\\\n', '<br>');
+        this.overlayMessage.innerHTML = message.replace(/\\n/g, '<br>');
         this.highScoreElement.textContent = this.getHighScore();
         this.overlay.classList.remove('hidden');
     }
