@@ -24,7 +24,7 @@ class SnakeGame {
         this.initializeScoreboard();
         
         // Show initial overlay
-        this.showOverlay('SNAKE', 'Press SPACE or ● to start\\nThen use arrow keys to move');
+        this.showOverlay('SNAKE', 'Tap anywhere or press ● to start\\nThen use arrow keys or buttons to move');
     }
     
     reset() {
@@ -64,12 +64,21 @@ class SnakeGame {
         addButtonHandlers('right', () => this.setDirection(1, 0));
         addButtonHandlers('select', () => this.toggleGame());
         
-        // Touch controls for mobile
-        this.canvas.addEventListener('click', () => {
+        // Touch controls for mobile - make entire screen tappable
+        const startGameTouch = (e) => {
             if (!this.gameRunning || this.gameOver) {
+                e.preventDefault();
                 this.toggleGame();
             }
-        });
+        };
+        
+        // Add touch events to canvas
+        this.canvas.addEventListener('click', startGameTouch);
+        this.canvas.addEventListener('touchstart', startGameTouch);
+        
+        // Also make the game overlay tappable
+        this.overlay.addEventListener('click', startGameTouch);
+        this.overlay.addEventListener('touchstart', startGameTouch);
         
         // Scoreboard events
         document.getElementById('showScoreboard').addEventListener('click', () => {
@@ -201,7 +210,7 @@ class SnakeGame {
             this.gameRunning = true;
         } else if (this.gameRunning) {
             this.gameRunning = false;
-            this.showOverlay('PAUSED', 'Press SPACE to continue');
+            this.showOverlay('PAUSED', 'Tap anywhere to continue');
         } else {
             this.gameRunning = true;
             this.hideOverlay();
@@ -363,9 +372,9 @@ class SnakeGame {
                 const localHighScore = this.getHighScore();
                 if (this.score > localHighScore) {
                     this.saveHighScore(this.score);
-                    this.showOverlay('NEW LOCAL HIGH!', `Score: ${this.score}\\nPress SPACE to play again`);
+                    this.showOverlay('NEW LOCAL HIGH!', `Score: ${this.score}\\nTap anywhere to play again`);
                 } else {
-                    this.showOverlay('GAME OVER', `Score: ${this.score}\\nPress SPACE to play again`);
+                    this.showOverlay('GAME OVER', `Score: ${this.score}\\nTap anywhere to play again`);
                 }
             }
         } catch (error) {
@@ -374,9 +383,9 @@ class SnakeGame {
             const localHighScore = this.getHighScore();
             if (this.score > localHighScore) {
                 this.saveHighScore(this.score);
-                this.showOverlay('NEW HIGH SCORE!', `Score: ${this.score}\\nPress SPACE to play again`);
+                this.showOverlay('NEW HIGH SCORE!', `Score: ${this.score}\\nTap anywhere to play again`);
             } else {
-                this.showOverlay('GAME OVER', `Score: ${this.score}\\nPress SPACE to play again`);
+                this.showOverlay('GAME OVER', `Score: ${this.score}\\nTap anywhere to play again`);
             }
         }
     }
@@ -419,15 +428,15 @@ class SnakeGame {
                 }
                 
                 // Show success message
-                this.showOverlay('SCORE SAVED!', `${name}: ${score}\\nPress SPACE to play again`);
+                this.showOverlay('SCORE SAVED!', `${name}: ${score}\\nTap anywhere to play again`);
             } else {
                 const error = await response.json();
                 console.error('Error submitting score:', error);
-                this.showOverlay('SAVE FAILED', `Score: ${score}\\nPress SPACE to play again`);
+                this.showOverlay('SAVE FAILED', `Score: ${score}\\nTap anywhere to play again`);
             }
         } catch (error) {
             console.error('Network error:', error);
-            this.showOverlay('CONNECTION ERROR', `Score: ${score}\\nPress SPACE to play again`);
+            this.showOverlay('CONNECTION ERROR', `Score: ${score}\\nTap anywhere to play again`);
         }
     }
     
