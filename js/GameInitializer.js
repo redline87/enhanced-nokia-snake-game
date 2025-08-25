@@ -4,7 +4,8 @@
 class GameInitializer {
     constructor() {
         this.container = window.DIContainer;
-        this.eventBus = window.GameEventBus;
+        // Ensure event bus is available
+        this.eventBus = window.GameEventBus || null;
         this.initializationSteps = [
             'registerInterfaces',
             'registerCoreServices', 
@@ -20,6 +21,11 @@ class GameInitializer {
     async initialize() {
         console.log('🎮 Starting King/Blizzard Architecture Initialization...');
         
+        // Ensure event bus is available
+        if (!this.eventBus && window.GameEventBus) {
+            this.eventBus = window.GameEventBus;
+        }
+        
         try {
             for (const step of this.initializationSteps) {
                 await this.executeStep(step);
@@ -27,7 +33,9 @@ class GameInitializer {
             }
             
             console.log('✅ Game initialization completed successfully!');
-            this.eventBus.emit('system:initialization_complete');
+            if (this.eventBus) {
+                this.eventBus.emit('system:initialization_complete');
+            }
             
         } catch (error) {
             console.error('❌ Game initialization failed:', error);
@@ -222,28 +230,58 @@ class GameInitializer {
     wireEventHandlers() {
         console.log('🔌 Wiring event handlers...');
         
+        // Try to get event bus if not already available
+        if (!this.eventBus && window.GameEventBus) {
+            this.eventBus = window.GameEventBus;
+        }
+        
+        // Ensure event bus and GameEvents are available
+        if (!this.eventBus) {
+            console.error('Event bus not available for wiring handlers');
+            return;
+        }
+        
+        if (!window.GameEvents) {
+            console.warn('GameEvents not defined, creating fallback');
+            window.GameEvents = {
+                GAME_START: 'game:start',
+                GAME_END: 'game:end',
+                ACHIEVEMENT_UNLOCKED: 'achievement:unlocked',
+                CURRENCY_EARNED: 'currency:earned',
+                CURRENCY_UPDATED: 'currency:updated'
+            };
+        }
+        
         // Game events
-        this.eventBus.on(GameEvents.GAME_START, (data) => {
-            const analytics = this.container.resolve('IAnalyticsService');
-            analytics.trackGameStart();
+        this.eventBus.on(window.GameEvents.GAME_START, (data) => {
+            if (this.container.has('IAnalyticsService')) {
+                const analytics = this.container.resolve('IAnalyticsService');
+                analytics.trackGameStart();
+            }
             
-            const security = this.container.resolve('ISecurityService');
-            security.startGameSession();
+            if (this.container.has('ISecurityService')) {
+                const security = this.container.resolve('ISecurityService');
+                security.startGameSession();
+            }
         });
         
-        this.eventBus.on(GameEvents.GAME_END, async (data) => {
+        this.eventBus.on(window.GameEvents.GAME_END, async (data) => {
             const { score, duration, applesEaten, isNewRecord } = data;
             
             // Update all systems asynchronously
             const promises = [];
             
             // Analytics
-            const analytics = this.container.resolve('IAnalyticsService');
-            promises.push(analytics.trackGameEnd(score, duration, 'collision'));
+            if (this.container.has('IAnalyticsService')) {
+                const analytics = this.container.resolve('IAnalyticsService');
+                promises.push(analytics.trackGameEnd(score, duration, 'collision'));
+            }
             
             // User profile
-            const userProfile = this.container.resolve('IUserProfileService');
-            promises.push(userProfile.onGameEnd({ score, duration, applesEaten, isNewRecord }));
+            if (this.container.has('IUserProfileService')) {
+                const userProfile = this.container.resolve('IUserProfileService');
+                promises.push(userProfile.onGameEnd({ score, duration, applesEaten, isNewRecord }));
+            }
             
             // Battle Pass
             if (this.container.has('IBattlePassService')) {
@@ -258,15 +296,17 @@ class GameInitializer {
             }
             
             // Security validation
-            const security = this.container.resolve('ISecurityService');
-            promises.push(security.validateScore({ score, duration, applesEaten }));
+            if (this.container.has('ISecurityService')) {
+                const security = this.container.resolve('ISecurityService');
+                promises.push(security.validateScore({ score, duration, applesEaten }));
+            }
             
             // Wait for all updates
             await Promise.allSettled(promises);
         });
         
         // Achievement events
-        this.eventBus.on(GameEvents.ACHIEVEMENT_UNLOCKED, (data) => {
+        this.eventBus.on(window.GameEvents.ACHIEVEMENT_UNLOCKED, (data) => {
             const { achievement } = data;
             
             // Award Battle Pass XP
@@ -277,18 +317,20 @@ class GameInitializer {
         });
         
         // Currency events
-        this.eventBus.on(GameEvents.CURRENCY_EARNED, async (data) => {
+        this.eventBus.on(window.GameEvents.CURRENCY_EARNED, async (data) => {
             const { type, amount, source } = data;
             
             // Validate with security service
-            const security = this.container.resolve('ISecurityService');
-            const validation = await security.validateCurrencyChange(type, amount, source);
-            
-            if (!validation.valid) {
-                console.warn('Currency validation failed:', validation.reason);
-                // Apply server correction
-                if (validation.correctedState) {
-                    this.eventBus.emit(GameEvents.CURRENCY_UPDATED, validation.correctedState);
+            if (this.container.has('ISecurityService')) {
+                const security = this.container.resolve('ISecurityService');
+                const validation = await security.validateCurrencyChange(type, amount, source);
+                
+                if (!validation.valid) {
+                    console.warn('Currency validation failed:', validation.reason);
+                    // Apply server correction
+                    if (validation.correctedState) {
+                        this.eventBus.emit(window.GameEvents.CURRENCY_UPDATED, validation.correctedState);
+                    }
                 }
             }
         });
@@ -456,11 +498,28 @@ class EnhancedSnakeGame {
     }
     
     setupEventHandlers() {
+        // Ensure event bus exists before using it
+        if (!this.eventBus && window.GameEventBus) {
+            this.eventBus = window.GameEventBus;
+        }
+        
+        // Ensure GameEvents is available
+        if (!window.GameEvents) {
+            console.warn('GameEvents not defined, using fallback');
+            window.GameEvents = {
+                GAME_START: 'game:start',
+                GAME_END: 'game:end',
+                SCORE_UPDATE: 'score:update'
+            };
+        }
+        
         // Use event bus instead of direct coupling
         this.engine.onGameStart = () => {
-            this.eventBus.emit(GameEvents.GAME_START, {
-                timestamp: Date.now()
-            });
+            if (this.eventBus && window.GameEvents) {
+                this.eventBus.emit(window.GameEvents.GAME_START, {
+                    timestamp: Date.now()
+                });
+            }
         };
         
         this.engine.onGameEnd = () => {
@@ -472,7 +531,9 @@ class EnhancedSnakeGame {
                 timestamp: Date.now()
             };
             
-            this.eventBus.emit(GameEvents.GAME_END, gameData);
+            if (this.eventBus && window.GameEvents) {
+                this.eventBus.emit(window.GameEvents.GAME_END, gameData);
+            }
         };
         
         this.engine.onFoodEaten = () => {
@@ -480,10 +541,12 @@ class EnhancedSnakeGame {
             this.uiController.updateScore(this.engine.getScore());
             this.foodEaten = (this.foodEaten || 0) + 1;
             
-            this.eventBus.emit(GameEvents.SCORE_UPDATE, {
-                score: this.engine.getScore(),
-                applesEaten: this.foodEaten
-            });
+            if (this.eventBus && window.GameEvents) {
+                this.eventBus.emit(window.GameEvents.SCORE_UPDATE, {
+                    score: this.engine.getScore(),
+                    applesEaten: this.foodEaten
+                });
+            }
         };
     }
     

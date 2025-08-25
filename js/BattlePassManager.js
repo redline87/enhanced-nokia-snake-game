@@ -178,9 +178,38 @@ class BattlePassManager {
         // Calculate current tier from XP
         this.updateCurrentTier();
         
+        // Sync with backend if authenticated
+        this.syncWithBackend();
+        
         console.log(`⚔️ Battle Pass Season ${this.battlePassData.seasonId} loaded`);
         console.log(`📊 Current Tier: ${this.battlePassData.currentTier}/50`);
         console.log(`💎 Premium: ${this.battlePassData.hasPremiumPass ? 'Yes' : 'No'}`);
+    }
+    
+    async syncWithBackend() {
+        if (!window.apiClient || !window.apiClient.isAuthenticated()) {
+            return;
+        }
+        
+        try {
+            const status = await window.apiClient.getBattlePassStatus();
+            if (status) {
+                // Update local data with backend data
+                this.battlePassData.currentTier = status.userProgress.current_tier;
+                this.battlePassData.battlePassXP = status.userProgress.current_xp;
+                this.battlePassData.hasPremiumPass = status.userProgress.is_premium;
+                this.battlePassData.xpFromGames = status.userProgress.total_xp_earned;
+                
+                // Update UI if needed
+                this.updateBattlePassUI();
+            }
+        } catch (error) {
+            console.error('Failed to sync Battle Pass with backend:', error);
+        }
+    }
+    
+    async refreshStatus() {
+        await this.syncWithBackend();
     }
     
     createBattlePassUI() {
