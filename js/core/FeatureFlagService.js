@@ -522,4 +522,4 @@ document.addEventListener('DOMContentLoaded', () => {
 window.FeatureFlagService = FeatureFlagService;
 window.FeatureFlags = featureFlagService;
 
-export { FeatureFlagService };
+// export { FeatureFlagService }; // Commented out - using global assignment instead

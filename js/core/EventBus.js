@@ -441,4 +441,4 @@ window.EventBus = EventBus;
 window.GameEventBus = eventBus;
 window.GameEvents = GameEvents;
 
-export { EventBus, eventBus as GameEventBus, GameEvents };
+// export { EventBus, eventBus as GameEventBus, GameEvents }; // Commented out - using global assignment instead

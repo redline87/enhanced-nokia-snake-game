@@ -330,4 +330,4 @@ container.addMiddleware(PerformanceMiddleware);
 window.DependencyContainer = DependencyContainer;
 window.DIContainer = container;
 
-export { DependencyContainer, container as DIContainer };
+// export { DependencyContainer, container as DIContainer }; // Commented out - using global assignment instead

@@ -49,7 +49,13 @@ class IAnalyticsService {
 }
 
 // Monetization Interface
-interface IMonetizationService {
+class IMonetizationService {
+    constructor() {
+        if (new.target === IMonetizationService) {
+            throw new Error('Cannot instantiate abstract interface IMonetizationService');
+        }
+    }
+    
     isAdFree() { throw new Error('Method isAdFree() must be implemented'); }
     getPremiumCurrency() { throw new Error('Method getPremiumCurrency() must be implemented'); }
     
@@ -384,4 +390,4 @@ const GameInterfaces = {
 // Make interfaces available globally
 Object.assign(window, GameInterfaces);
 
-export default GameInterfaces;
+// export default GameInterfaces; // Commented out - using global assignment instead
