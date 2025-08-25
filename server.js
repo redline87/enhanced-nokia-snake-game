@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const database = require('./lib/database');
+const auth = require('./lib/auth');
+const battlepass = require('./lib/battlepass');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -78,6 +80,202 @@ app.get('/api/scores/check/:score', async (req, res) => {
     } catch (err) {
         console.error('Database error:', err.message);
         res.status(500).json({ error: 'Failed to check score' });
+    }
+});
+
+// ============== AUTHENTICATION ENDPOINTS ==============
+
+// Register new user
+app.post('/api/auth/register', async (req, res) => {
+    const { username, email, password, displayName } = req.body;
+    
+    try {
+        const user = await auth.register(username, email, password, displayName);
+        res.status(201).json({ 
+            success: true, 
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                displayName: user.display_name,
+                level: user.level,
+                coins: user.coins,
+                gems: user.gems
+            }
+        });
+    } catch (err) {
+        console.error('Registration error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Login
+app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body;
+    const ipAddress = req.ip;
+    const userAgent = req.headers['user-agent'];
+    
+    try {
+        const result = await auth.login(username, password, ipAddress, userAgent);
+        res.json({ 
+            success: true,
+            token: result.token,
+            user: result.user
+        });
+    } catch (err) {
+        console.error('Login error:', err.message);
+        res.status(401).json({ error: err.message });
+    }
+});
+
+// Verify token
+app.get('/api/auth/verify', async (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    
+    const result = await auth.verifyToken(token);
+    if (result.valid) {
+        res.json({ valid: true, user: result.user });
+    } else {
+        res.status(401).json({ valid: false, error: result.error });
+    }
+});
+
+// Logout
+app.post('/api/auth/logout', auth.authMiddleware(), async (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    try {
+        await auth.logout(token);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Logout error:', err.message);
+        res.status(500).json({ error: 'Failed to logout' });
+    }
+});
+
+// Get user profile
+app.get('/api/auth/profile', auth.authMiddleware(), async (req, res) => {
+    try {
+        const profile = await auth.getUserProfile(req.user.id);
+        res.json({ 
+            user: req.user,
+            profile
+        });
+    } catch (err) {
+        console.error('Profile error:', err.message);
+        res.status(500).json({ error: 'Failed to get profile' });
+    }
+});
+
+// ============== BATTLE PASS ENDPOINTS ==============
+
+// Get Battle Pass status
+app.get('/api/battlepass/status', auth.authMiddleware(), async (req, res) => {
+    try {
+        const seasonId = await battlepass.getCurrentSeasonId();
+        const season = await battlepass.getSeason(seasonId);
+        const userBattlePass = await battlepass.getUserBattlePass(req.user.id, seasonId);
+        const rewards = await battlepass.getSeasonRewards(seasonId);
+        
+        res.json({
+            season,
+            userProgress: userBattlePass,
+            rewards,
+            nextTierXP: season.xp_per_tier - userBattlePass.current_xp
+        });
+    } catch (err) {
+        console.error('Battle Pass status error:', err.message);
+        res.status(500).json({ error: 'Failed to get Battle Pass status' });
+    }
+});
+
+// Add XP to Battle Pass
+app.post('/api/battlepass/xp', auth.authMiddleware(), async (req, res) => {
+    const { amount, source, details } = req.body;
+    
+    if (!amount || amount <= 0) {
+        return res.status(400).json({ error: 'Valid XP amount required' });
+    }
+    
+    try {
+        const result = await battlepass.addXP(req.user.id, amount, source || 'game', details);
+        res.json(result);
+    } catch (err) {
+        console.error('Battle Pass XP error:', err.message);
+        res.status(500).json({ error: 'Failed to add XP' });
+    }
+});
+
+// Purchase premium Battle Pass
+app.post('/api/battlepass/purchase', auth.authMiddleware(), async (req, res) => {
+    try {
+        // TODO: Integrate payment processing here
+        const result = await battlepass.purchasePremium(req.user.id);
+        res.json({ success: true, ...result });
+    } catch (err) {
+        console.error('Battle Pass purchase error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Claim Battle Pass reward
+app.post('/api/battlepass/claim', auth.authMiddleware(), async (req, res) => {
+    const { tier, isPremium } = req.body;
+    
+    if (!tier || tier < 1) {
+        return res.status(400).json({ error: 'Valid tier required' });
+    }
+    
+    try {
+        const reward = await battlepass.claimReward(req.user.id, tier, isPremium);
+        res.json({ success: true, reward });
+    } catch (err) {
+        console.error('Battle Pass claim error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// ============== GAME ENDPOINTS ==============
+
+// Submit game result (with Battle Pass XP)
+app.post('/api/game/end', auth.authMiddleware(), async (req, res) => {
+    const { score, duration, applesEaten } = req.body;
+    
+    try {
+        // Calculate XP based on performance
+        let xp = 25; // Base XP
+        xp += Math.floor(score / 10); // Bonus XP for score
+        xp += Math.min(applesEaten * 2, 50); // Bonus XP for apples (max 50)
+        
+        // Add XP to Battle Pass
+        const battlePassResult = await battlepass.addXP(
+            req.user.id, 
+            xp, 
+            'game_completion',
+            JSON.stringify({ score, duration, applesEaten })
+        );
+        
+        // Save score if it's high enough
+        if (score > 0) {
+            const qualifies = await database.checkScoreQualifies(score);
+            if (qualifies.qualifies) {
+                await database.addScore(req.user.username, score);
+            }
+        }
+        
+        res.json({
+            success: true,
+            xpEarned: xp,
+            battlePass: battlePassResult,
+            score
+        });
+    } catch (err) {
+        console.error('Game end error:', err.message);
+        res.status(500).json({ error: 'Failed to process game result' });
     }
 });
 
