@@ -1,14 +1,8 @@
 /* Comprehensive UI Fixes - Stronger selectors and complete overrides */
 
-/* ========== UI BUTTON FIXES ========== */
-/* Position Premium button top-right */
+/* ========== UI BUTTON STYLES ========== */
+/* Style Premium button */
 #premiumButton {
-    position: fixed !important;
-    top: 20px !important;
-    right: 20px !important;
-    left: auto !important;
-    bottom: auto !important;
-    z-index: 1001 !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     border: none !important;
     color: white !important;
@@ -18,19 +12,11 @@
     padding: 8px 16px !important;
     border-radius: 8px !important;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-    display: inline-block !important;
-    margin: 0 !important;
     cursor: pointer !important;
 }
 
-/* Position Battle Pass button below Premium */
+/* Style Battle Pass button */
 #battlePassButton {
-    position: fixed !important;
-    top: 65px !important;
-    right: 20px !important;
-    left: auto !important;
-    bottom: auto !important;
-    z-index: 1001 !important;
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
     border: none !important;
     color: white !important;
@@ -40,32 +26,24 @@
     padding: 6px 12px !important;
     border-radius: 8px !important;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-    display: inline-block !important;
-    margin: 0 !important;
-    max-width: 200px !important;
     cursor: pointer !important;
 }
 
-/* Position Profile button top-left */
-#profileButton {
-    position: fixed !important;
-    top: 20px !important;
-    left: 20px !important;
-    right: auto !important;
-    bottom: auto !important;
-    z-index: 1001 !important;
-    cursor: pointer !important;
+/* Button hover effects */
+#premiumButton:hover,
+#battlePassButton:hover,
+#profileButton:hover,
+#achievementButton:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
 }
 
-/* Position Achievements button below Profile */
-#achievementButton {
-    position: fixed !important;
-    top: 65px !important;
-    left: 20px !important;
-    right: auto !important;
-    bottom: auto !important;
-    z-index: 1001 !important;
-    cursor: pointer !important;
+/* Button active states */
+#premiumButton:active,
+#battlePassButton:active,
+#profileButton:active,
+#achievementButton:active {
+    transform: scale(0.98);
 }
 
 /* ========== MODAL OVERLAY FIXES ========== */
