@@ -137,7 +137,7 @@ class SnakeGame {
         // Audio and UI
         this.audioManager.playStartSound();
         this.uiController.hideOverlay();
-        this.uiController.showShareButton(false); // Hide share button during gameplay
+        this.social.showShareButton(false); // Hide share button during gameplay
         
         // Analytics and tracking
         this.analytics.trackGameStart();
@@ -178,7 +178,7 @@ class SnakeGame {
         
         // Handle UI and social features
         this.uiController.handleGameOver(score);
-        this.uiController.showShareButton(true);
+        this.social.showShareButton(true);
         
         // Custom events for monetization system
         const gameEndEvent = new CustomEvent('gameEnd', {
@@ -206,7 +206,7 @@ class SnakeGame {
         this.audioManager.playStartSound();
         this.uiController.updateScore(0);
         this.uiController.hideOverlay();
-        this.uiController.showShareButton(false);
+        this.social.showShareButton(false);
         
         // Track restart
         this.analytics.trackEvent('game_restart', {

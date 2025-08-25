@@ -185,11 +185,8 @@ class GameInitializer {
     async initializeGame() {
         console.log('🎲 Initializing main game...');
         
-        // Initialize Game Engine with dependencies
-        this.container.register('GameEngine', GameEngine, [], {
-            singleton: true,
-            interface: 'IGameEngine'
-        });
+        // Initialize Game Engine with canvas ID
+        this.container.registerFactory('IGameEngine', () => new GameEngine('gameCanvas'), []);
         
         // Initialize Score Manager
         this.container.register('ScoreManager', ScoreManager, [], {
