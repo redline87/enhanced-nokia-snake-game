@@ -1,0 +1,237 @@
+/* Targeted UI Fixes for Snake Game - Retro Nokia Consistency */
+
+/* ========== TOP LEFT FIXES ========== */
+
+/* Premium button - Make it retro Nokia style */
+button:contains("Premium"),
+.premium-offer-btn,
+button[style*="linear-gradient(135deg, rgb(246, 213, 92)"] {
+    /* Remove modern gradient, use retro LCD style */
+    background: #9cb86f !important; /* Nokia green LCD color */
+    border: 2px solid #1a1a1a !important;
+    color: #1a1a1a !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    padding: 8px 16px !important;
+    border-radius: 4px !important; /* Minimal radius for retro feel */
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    z-index: 1100 !important;
+}
+
+button:contains("Premium"):hover,
+.premium-offer-btn:hover {
+    background: #8ab05f !important; /* Slightly darker on hover */
+    transform: none !important; /* Remove modern transform effects */
+}
+
+/* Hide empty red button at (20,80) */
+button[style*="linear-gradient(135deg, rgb(229, 62, 62)"],
+button:empty:not(.key):not([id]) {
+    display: none !important;
+}
+
+/* Battle Pass button - Retro style */
+.battle-pass-btn,
+button:contains("Battle Pass") {
+    background: #7a9c4f !important; /* Darker Nokia green */
+    border: 2px solid #1a1a1a !important;
+    color: #1a1a1a !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
+    position: fixed !important;
+    top: 65px !important;
+    left: 20px !important;
+    z-index: 1100 !important;
+}
+
+/* ========== TOP RIGHT FIXES ========== */
+
+/* Profile badge - Nokia retro style with better spacing */
+.user-profile-btn,
+button:has(.user-profile-content),
+button:contains("CleverMamba") {
+    background: #2c3e50 !important; /* Match Nokia phone color */
+    border: 3px solid #34495e !important;
+    color: #8bc34a !important; /* Nokia green text */
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+    position: fixed !important;
+    top: 20px !important;
+    right: 80px !important; /* Move left to avoid trophy overlap */
+    z-index: 1100 !important;
+    max-width: 160px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+/* Trophy/Leaderboard button - Nokia style with proper spacing */
+.leaderboard-btn,
+button:contains("🏆"):not(:contains("View")) {
+    background: #34495e !important; /* Darker Nokia blue */
+    border: 2px solid #1a1a1a !important;
+    color: #f39c12 !important; /* Gold for trophy */
+    font-size: 20px !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 1100 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+}
+
+.leaderboard-btn:hover,
+button:contains("🏆"):not(:contains("View")):hover {
+    background: #2c3748 !important;
+}
+
+/* ========== REMOVE ARTIFACTS ========== */
+
+/* Remove any empty buttons */
+button:empty {
+    display: none !important;
+}
+
+/* Remove buttons without classes that are empty */
+button:not([class]):not([id]):empty {
+    display: none !important;
+}
+
+/* Hide middle empty button */
+button[style*="left: 600px"],
+button[style*="left: 50%"]:empty {
+    display: none !important;
+}
+
+/* ========== CURRENCY DISPLAY - RETRO STYLE ========== */
+
+.currency-display {
+    background: #2c3e50 !important;
+    border: 2px solid #34495e !important;
+    color: #8bc34a !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    position: fixed !important;
+    top: 70px !important;
+    right: 20px !important;
+    z-index: 1100 !important;
+    display: flex !important;
+    gap: 12px !important;
+}
+
+.currency-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+/* ========== OVERALL CONSISTENCY ========== */
+
+/* Ensure all UI overlay buttons follow Nokia theme */
+button[style*="position: fixed"] {
+    font-family: 'Courier New', monospace !important;
+    text-transform: uppercase !important;
+    transition: background-color 0.2s ease !important; /* Simple transition only */
+}
+
+/* Remove all gradient backgrounds from fixed buttons */
+button[style*="linear-gradient"] {
+    background-image: none !important;
+}
+
+/* Settings button if present - Nokia style */
+.settings-btn {
+    background: #34495e !important;
+    border: 2px solid #1a1a1a !important;
+    color: #8bc34a !important;
+    font-size: 16px !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 6px !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 1100 !important;
+}
+
+/* Challenge display - Retro style */
+.challenge-display,
+div:contains("Daily Challenge") {
+    background: #2c3e50 !important;
+    border: 2px solid #34495e !important;
+    color: #8bc34a !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    max-width: 280px !important;
+}
+
+/* ========== RESPONSIVE ADJUSTMENTS ========== */
+
+@media (max-width: 768px) {
+    .user-profile-btn,
+    button:contains("CleverMamba") {
+        right: 60px !important;
+        font-size: 10px !important;
+        padding: 6px 10px !important;
+        max-width: 140px !important;
+    }
+    
+    .leaderboard-btn,
+    button:contains("🏆"):not(:contains("View")) {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 18px !important;
+    }
+    
+    button:contains("Premium"),
+    .premium-offer-btn {
+        font-size: 11px !important;
+        padding: 6px 12px !important;
+    }
+    
+    .currency-display {
+        top: 60px !important;
+        right: 10px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* ========== CLEANUP ========== */
+
+/* Ensure no black bars appear */
+div[style*="background: black"],
+div[style*="background-color: black"],
+div[style*="background: rgb(0, 0, 0)"] {
+    display: none !important;
+}
+
+/* Clean up any floating divs without content */
+div:empty[style*="position: fixed"] {
+    display: none !important;
+}
