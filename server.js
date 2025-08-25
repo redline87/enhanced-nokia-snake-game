@@ -1,7 +1,8 @@
+require('dotenv').config();
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const database = require('./lib/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,54 +12,28 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.')); // Serve static files from current directory
 
-// Initialize SQLite database
-const db = new sqlite3.Database('./scores.db', (err) => {
-    if (err) {
-        console.error('Error opening database:', err.message);
-    } else {
-        console.log('Connected to SQLite database');
-        
-        // Create scores table if it doesn't exist
-        db.run(`
-            CREATE TABLE IF NOT EXISTS scores (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                score INTEGER NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `, (err) => {
-            if (err) {
-                console.error('Error creating table:', err.message);
-            } else {
-                console.log('Scores table ready');
-            }
-        });
-    }
+// Initialize database connection
+database.connect().then(() => {
+    console.log('Database initialized');
+}).catch(err => {
+    console.error('Database initialization error:', err);
 });
 
 // API Routes
 
 // Get top 10 high scores
-app.get('/api/scores', (req, res) => {
-    const query = `
-        SELECT name, score, timestamp 
-        FROM scores 
-        ORDER BY score DESC, timestamp ASC 
-        LIMIT 10
-    `;
-    
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('Database error:', err.message);
-            res.status(500).json({ error: 'Failed to fetch scores' });
-        } else {
-            res.json(rows);
-        }
-    });
+app.get('/api/scores', async (req, res) => {
+    try {
+        const scores = await database.getTopScores();
+        res.json(scores);
+    } catch (err) {
+        console.error('Database error:', err.message);
+        res.status(500).json({ error: 'Failed to fetch scores' });
+    }
 });
 
 // Add new score
-app.post('/api/scores', (req, res) => {
+app.post('/api/scores', async (req, res) => {
     const { name, score } = req.body;
     
     // Validate input
@@ -79,65 +54,31 @@ app.post('/api/scores', (req, res) => {
         return res.status(400).json({ error: 'Name must contain valid characters' });
     }
     
-    const query = `
-        INSERT INTO scores (name, score) 
-        VALUES (?, ?)
-    `;
-    
-    db.run(query, [sanitizedName, score], function(err) {
-        if (err) {
-            console.error('Database error:', err.message);
-            res.status(500).json({ error: 'Failed to save score' });
-        } else {
-            console.log(`New score added: ${sanitizedName} - ${score}`);
-            
-            // Return the new score with ID and timestamp
-            db.get(
-                'SELECT id, name, score, timestamp FROM scores WHERE id = ?',
-                [this.lastID],
-                (err, row) => {
-                    if (err) {
-                        res.status(201).json({ 
-                            id: this.lastID, 
-                            name: sanitizedName, 
-                            score 
-                        });
-                    } else {
-                        res.status(201).json(row);
-                    }
-                }
-            );
-        }
-    });
+    try {
+        const newScore = await database.addScore(sanitizedName, score);
+        console.log(`New score added: ${sanitizedName} - ${score}`);
+        res.status(201).json(newScore);
+    } catch (err) {
+        console.error('Database error:', err.message);
+        res.status(500).json({ error: 'Failed to save score' });
+    }
 });
 
 // Check if score qualifies for top 10
-app.get('/api/scores/check/:score', (req, res) => {
+app.get('/api/scores/check/:score', async (req, res) => {
     const score = parseInt(req.params.score);
     
     if (isNaN(score) || score < 0) {
         return res.status(400).json({ error: 'Valid score required' });
     }
     
-    const query = `
-        SELECT COUNT(*) as count 
-        FROM scores 
-        WHERE score > ?
-    `;
-    
-    db.get(query, [score], (err, row) => {
-        if (err) {
-            console.error('Database error:', err.message);
-            res.status(500).json({ error: 'Failed to check score' });
-        } else {
-            const qualifies = row.count < 10;
-            res.json({ 
-                qualifies, 
-                position: row.count + 1,
-                score 
-            });
-        }
-    });
+    try {
+        const result = await database.checkScoreQualifies(score);
+        res.json(result);
+    } catch (err) {
+        console.error('Database error:', err.message);
+        res.status(500).json({ error: 'Failed to check score' });
+    }
 });
 
 // Serve the main HTML file
