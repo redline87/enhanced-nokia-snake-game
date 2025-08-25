@@ -507,7 +507,8 @@ class EnhancedSnakeGame {
     // Public API methods
     toggleGame() {
         if (this.engine.isGameOver()) {
-            this.engine.restart();
+            // Don't auto-restart - wait for user to dismiss game over overlay first
+            return;
         } else if (this.engine.isRunning()) {
             this.engine.pause();
         } else {

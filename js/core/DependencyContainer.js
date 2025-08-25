@@ -197,7 +197,7 @@ class DependencyContainer {
 
 // Middleware for logging service creation (development)
 const LoggingMiddleware = (instance, serviceName, container) => {
-    if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+    if ((typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') || window.location.hostname === 'localhost') {
         console.log(`🏭 Service '${serviceName}' created`);
     }
     return instance;

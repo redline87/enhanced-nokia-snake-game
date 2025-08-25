@@ -99,7 +99,13 @@ class UIController {
     
     handleToggleGame() {
         if (this.game) {
-            this.game.toggleGame();
+            // If game is over and overlay is visible, restart the game
+            if (this.gameEngine.isGameOver() && !this.overlay.classList.contains('hidden')) {
+                this.hideOverlay();
+                this.game.engine.restart();
+            } else {
+                this.game.toggleGame();
+            }
         }
     }
     

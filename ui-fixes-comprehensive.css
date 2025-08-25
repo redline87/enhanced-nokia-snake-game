@@ -1,87 +1,82 @@
 /* Comprehensive UI Fixes - Stronger selectors and complete overrides */
 
-/* ========== PREMIUM BUTTON FIX ========== */
-/* Target Premium button with multiple selectors for maximum specificity */
-button[id*="premium"],
-button.premium-offer-btn,
-button:nth-of-type(1)[style*="gradient"],
-body > button:first-of-type,
-button:has-text("Premium"),
-button[textContent*="Premium"],
-button[innerText*="Premium"],
-button:contains("Premium"),
-/* Fallback: any button with Premium text */
-button {
-    /* Only apply to Premium buttons */
+/* ========== UI BUTTON FIXES ========== */
+/* Position Premium button top-right */
+#premiumButton {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 1001 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    cursor: pointer !important;
 }
 
-/* Specific Premium button fix using text content matching */
-body > button {
+/* Position Battle Pass button below Premium */
+#battlePassButton {
+    position: fixed !important;
+    top: 65px !important;
+    right: 20px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 1001 !important;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+    border: none !important;
+    color: white !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    max-width: 200px !important;
+    cursor: pointer !important;
+}
+
+/* Position Profile button top-left */
+#profileButton {
     position: fixed !important;
     top: 20px !important;
     left: 20px !important;
     right: auto !important;
     bottom: auto !important;
-    z-index: 2000 !important;
-    background: #9cb86f !important;
-    border: 2px solid #1a1a1a !important;
-    color: #1a1a1a !important;
-    font-family: 'Courier New', monospace !important;
-    font-weight: bold !important;
-    font-size: 12px !important;
-    text-transform: uppercase !important;
-    padding: 8px 16px !important;
-    border-radius: 4px !important;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
-    display: inline-block !important;
-    margin: 0 !important;
+    z-index: 1001 !important;
+    cursor: pointer !important;
 }
 
-/* Target Premium button specifically */
-body > button:nth-child(6) {
-    position: fixed !important;
-    top: 20px !important;
-    left: 20px !important;
-}
-
-/* ========== BATTLE PASS BUTTON FIX ========== */
-/* Battle Pass button positioning */
-button[id*="battlepass"],
-button.battle-pass-btn,
-button:has-text("Battle Pass"),
-button[textContent*="Battle Pass"],
-button[innerText*="Battle Pass"],
-/* Target by emoji */
-button[textContent*="⚔️"],
-body > button:nth-child(7) {
+/* Position Achievements button below Profile */
+#achievementButton {
     position: fixed !important;
     top: 65px !important;
     left: 20px !important;
     right: auto !important;
     bottom: auto !important;
-    z-index: 2000 !important;
-    background: #7a9c4f !important;
-    border: 2px solid #1a1a1a !important;
-    color: #1a1a1a !important;
-    font-family: 'Courier New', monospace !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    text-transform: uppercase !important;
-    padding: 6px 12px !important;
-    border-radius: 4px !important;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
-    display: inline-block !important;
-    margin: 0 !important;
-    max-width: 200px !important;
+    z-index: 1001 !important;
+    cursor: pointer !important;
 }
 
-/* ========== DAILY CHALLENGE OVERLAY FIX ========== */
-/* Remove full-screen blocking overlays */
-div[style*="position: fixed"][style*="top: 0"][style*="left: 0"][style*="right: 0"][style*="bottom: 0"],
-div.challenge-overlay,
-div[class*="overlay"][style*="rgba(0, 0, 0"] {
-    pointer-events: none !important;
-    display: none !important;
+/* ========== MODAL OVERLAY FIXES ========== */
+/* Ensure game overlay is visible when needed */
+#gameOverlay {
+    pointer-events: auto !important;
+}
+
+/* Ensure modals work properly */
+.modal-overlay {
+    pointer-events: auto !important;
 }
 
 /* Daily Challenge bar positioning */
