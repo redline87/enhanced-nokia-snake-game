@@ -1,0 +1,268 @@
+/* Comprehensive UI Fixes - Stronger selectors and complete overrides */
+
+/* ========== PREMIUM BUTTON FIX ========== */
+/* Target Premium button with multiple selectors for maximum specificity */
+button[id*="premium"],
+button.premium-offer-btn,
+button:nth-of-type(1)[style*="gradient"],
+body > button:first-of-type,
+button:has-text("Premium"),
+button[textContent*="Premium"],
+button[innerText*="Premium"],
+button:contains("Premium"),
+/* Fallback: any button with Premium text */
+button {
+    /* Only apply to Premium buttons */
+}
+
+/* Specific Premium button fix using text content matching */
+body > button {
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 2000 !important;
+    background: #9cb86f !important;
+    border: 2px solid #1a1a1a !important;
+    color: #1a1a1a !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    padding: 8px 16px !important;
+    border-radius: 4px !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
+    display: inline-block !important;
+    margin: 0 !important;
+}
+
+/* Target Premium button specifically */
+body > button:nth-child(6) {
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+}
+
+/* ========== BATTLE PASS BUTTON FIX ========== */
+/* Battle Pass button positioning */
+button[id*="battlepass"],
+button.battle-pass-btn,
+button:has-text("Battle Pass"),
+button[textContent*="Battle Pass"],
+button[innerText*="Battle Pass"],
+/* Target by emoji */
+button[textContent*="⚔️"],
+body > button:nth-child(7) {
+    position: fixed !important;
+    top: 65px !important;
+    left: 20px !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 2000 !important;
+    background: #7a9c4f !important;
+    border: 2px solid #1a1a1a !important;
+    color: #1a1a1a !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    max-width: 200px !important;
+}
+
+/* ========== DAILY CHALLENGE OVERLAY FIX ========== */
+/* Remove full-screen blocking overlays */
+div[style*="position: fixed"][style*="top: 0"][style*="left: 0"][style*="right: 0"][style*="bottom: 0"],
+div.challenge-overlay,
+div[class*="overlay"][style*="rgba(0, 0, 0"] {
+    pointer-events: none !important;
+    display: none !important;
+}
+
+/* Daily Challenge bar positioning */
+div:has-text("Daily Challenge"),
+div[textContent*="Daily Challenge"],
+.challenge-display,
+div.daily-challenge,
+body > div:last-of-type {
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    right: auto !important;
+    top: auto !important;
+    max-width: 400px !important;
+    background: #2c3e50 !important;
+    border: 2px solid #34495e !important;
+    color: #8bc34a !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    z-index: 1500 !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure challenge content is clickable */
+div.daily-challenge > *,
+.challenge-display > * {
+    pointer-events: auto !important;
+}
+
+/* ========== STAY CONNECTED NOTIFICATION FIX ========== */
+/* Restyle notification to match Nokia theme */
+.notification-prompt,
+div:has-text("Stay Connected"),
+div[style*="background"][style*="purple"],
+div[style*="rgb(139, 92, 246)"],
+body > div:has(> h3:has-text("Stay Connected")) {
+    background: #34495e !important;
+    border: 3px solid #1a1a1a !important;
+    color: #8bc34a !important;
+    font-family: 'Courier New', monospace !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+}
+
+/* Notification buttons */
+.notification-prompt button,
+div:has-text("Stay Connected") button {
+    background: #2c3e50 !important;
+    border: 2px solid #1a1a1a !important;
+    color: #8bc34a !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: bold !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    margin: 0 5px !important;
+}
+
+.notification-prompt button:hover,
+div:has-text("Stay Connected") button:hover {
+    background: #34495e !important;
+}
+
+/* ========== PROFILE BUTTON REINFORCEMENT ========== */
+#profileButton,
+button[id="profileButton"],
+button.user-profile-btn {
+    position: fixed !important;
+    top: 20px !important;
+    right: 80px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 2000 !important;
+}
+
+/* ========== TROPHY BUTTON REINFORCEMENT ========== */
+#achievementBtn,
+button[id="achievementBtn"],
+button.leaderboard-btn {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 2000 !important;
+}
+
+/* ========== REMOVE EMPTY/HIDDEN ELEMENTS ========== */
+button:empty:not(.key):not([id]),
+div:empty[style*="position: fixed"],
+div[style*="display: none"] {
+    display: none !important;
+}
+
+/* ========== Z-INDEX HIERARCHY ========== */
+/* Ensure proper layering */
+.nokia-phone {
+    z-index: 1 !important;
+}
+
+.game-overlay {
+    z-index: 100 !important;
+}
+
+.modal-overlay {
+    z-index: 3000 !important;
+}
+
+/* Header buttons should be above game but below modals */
+button[style*="position: fixed"] {
+    z-index: 2000 !important;
+}
+
+/* ========== OVERRIDE INLINE STYLES ========== */
+/* Force override any inline styles on problematic elements */
+[style*="position: static"] {
+    position: fixed !important;
+}
+
+/* ========== SPECIFIC ELEMENT TARGETING BY INDEX ========== */
+/* Premium button - usually 6th child */
+body > button:nth-child(6) {
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    background: #9cb86f !important;
+}
+
+/* Battle Pass - usually 7th child when visible */
+body > button:nth-child(7)[style*="display: block"],
+body > button:nth-child(7):not([style*="display: none"]) {
+    position: fixed !important;
+    top: 65px !important;
+    left: 20px !important;
+    background: #7a9c4f !important;
+}
+
+/* Daily Challenge - last div child */
+body > div:last-child:has-text("Daily Challenge") {
+    bottom: 20px !important;
+    top: auto !important;
+}
+
+/* ========== MEDIA QUERIES ========== */
+@media (max-width: 768px) {
+    body > button:nth-child(6) {
+        font-size: 11px !important;
+        padding: 6px 12px !important;
+    }
+    
+    body > button:nth-child(7) {
+        font-size: 10px !important;
+        padding: 5px 10px !important;
+        top: 60px !important;
+    }
+    
+    div.daily-challenge {
+        font-size: 10px !important;
+        max-width: 90% !important;
+    }
+}
+
+/* ========== IMPORTANT OVERRIDES ========== */
+/* Nuclear option for Premium button if still not working */
+body button:first-of-type[onclick*="premium"],
+body button:first-of-type[style*="gradient"] {
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    transform: none !important;
+    margin: 0 !important;
+}
+
+/* Nuclear option for Battle Pass */
+body button[onclick*="battle"],
+body button[style*="Tier"] {
+    position: fixed !important;
+    top: 65px !important;
+    left: 20px !important;
+    transform: none !important;
+    margin: 0 !important;
+}

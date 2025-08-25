@@ -1,0 +1,191 @@
+/* Header Layout Fix - Proper spacing and alignment for top elements */
+
+/* Create a header container for all top elements */
+.game-header-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    pointer-events: none; /* Allow clicks to pass through empty areas */
+}
+
+.game-header-container > * {
+    pointer-events: auto; /* Re-enable clicks on actual elements */
+}
+
+/* Left section - Premium button */
+.header-left {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Center section - Trophy/Leaderboard */
+.header-center {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Right section - Profile and Battle Pass */
+.header-right {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Fix Premium button positioning */
+.premium-offer-btn,
+button:contains("Premium"),
+button[id*="premium"] {
+    position: static !important;
+    margin: 0 !important;
+}
+
+/* Fix Trophy/Achievement button */
+.leaderboard-btn,
+button#achievementBtn,
+button:contains("🏆"):not(:contains("View")) {
+    position: static !important;
+    margin: 0 !important;
+}
+
+/* Fix Profile button */
+.user-profile-btn,
+button#profileButton,
+button:contains("CleverMamba") {
+    position: static !important;
+    margin: 0 !important;
+    max-width: 180px !important;
+}
+
+/* Fix Battle Pass button */
+.battle-pass-btn,
+button:contains("Battle Pass") {
+    position: static !important;
+    margin: 0 !important;
+    max-width: 200px !important;
+}
+
+/* Alternative approach using CSS Grid for better control */
+.game-header-grid {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: center;
+    z-index: 1000;
+}
+
+.game-header-grid .left-section {
+    display: flex;
+    gap: 15px;
+}
+
+.game-header-grid .center-section {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.game-header-grid .right-section {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+/* Override individual element positioning */
+button[style*="position: fixed"][style*="top: 20px"] {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+}
+
+/* Ensure proper spacing for overlapping elements */
+#profileButton {
+    position: fixed !important;
+    top: 20px !important;
+    right: 80px !important; /* Move left to make room for trophy */
+    left: auto !important;
+    z-index: 1100 !important;
+}
+
+#achievementBtn {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    z-index: 1100 !important;
+}
+
+/* Battle Pass positioning when visible */
+.battle-pass-btn:not([style*="display: none"]) {
+    position: fixed !important;
+    top: 80px !important;
+    right: 20px !important;
+    left: auto !important;
+    z-index: 1100 !important;
+}
+
+/* Currency display positioning */
+.currency-display {
+    position: fixed !important;
+    top: 80px !important;
+    right: 180px !important;
+    left: auto !important;
+    z-index: 1100 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #profileButton {
+        right: 65px !important;
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+    }
+    
+    #achievementBtn {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 16px !important;
+    }
+    
+    .battle-pass-btn {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+    }
+}
+
+/* Ensure elements don't overlap at different viewport sizes */
+@media (min-width: 1200px) {
+    #profileButton {
+        right: 100px !important;
+    }
+    
+    .battle-pass-btn {
+        right: 40px !important;
+    }
+}
+
+/* Clean layout for all fixed header elements */
+body > button[style*="position: fixed"][style*="top: 20px"] {
+    transition: all 0.3s ease;
+}
+
+/* Prevent text wrapping in profile button */
+#profileButton,
+.user-profile-btn {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
