@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "snake-game-live-service",
   "builds": [
     {
       "src": "server.js",
@@ -33,11 +32,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "server.js": {
-      "maxDuration": 30,
-      "memory": 512
-    }
   }
 }
