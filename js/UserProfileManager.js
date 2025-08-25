@@ -521,7 +521,7 @@ class UserProfileManager {
     }
     
     // Game Event Handlers
-    onGameEnd(gameData) {
+    async onGameEnd(gameData) {
         this.profile.gamesPlayed++;
         this.profile.totalScore += gameData.score;
         this.profile.totalApplesEaten += gameData.applesEaten || 0;
@@ -533,7 +533,43 @@ class UserProfileManager {
             this.showNotification('🏆 New Personal Best!', 'achievement');
         }
         
-        // Award experience based on performance
+        // Submit to backend if authenticated
+        if (window.apiClient && window.apiClient.isAuthenticated()) {
+            try {
+                const result = await window.apiClient.submitGameResult(
+                    gameData.score,
+                    gameData.duration,
+                    gameData.applesEaten
+                );
+                
+                if (result.success) {
+                    // Use backend-calculated XP and Battle Pass progression
+                    if (result.xpEarned) {
+                        this.addExperience(result.xpEarned, 'game_completion');
+                    }
+                    
+                    if (result.battlePass && result.battlePass.tierUp) {
+                        this.showNotification(`⚔️ Battle Pass Tier ${result.battlePass.newTier}!`, 'achievement');
+                    }
+                    
+                    // Refresh Battle Pass UI
+                    if (window.battlePassManager) {
+                        window.battlePassManager.refreshStatus();
+                    }
+                    
+                    // Award coins locally (backend doesn't handle coins yet)
+                    const coinsEarned = Math.floor(gameData.score / 5);
+                    this.addCurrency('coins', coinsEarned, 'game_reward');
+                    
+                    this.saveProfile();
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to submit game result to backend:', error);
+            }
+        }
+        
+        // Fallback to local calculation if not authenticated or backend fails
         const baseXP = Math.floor(gameData.score / 10);
         const bonusXP = gameData.score > this.profile.averageScore ? 10 : 0;
         const totalXP = baseXP + bonusXP;
